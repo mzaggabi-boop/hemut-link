@@ -1,1 +1,2 @@
-export { default, Button } from "../app/components/Button";
+import Button from "@/components/Button";
+

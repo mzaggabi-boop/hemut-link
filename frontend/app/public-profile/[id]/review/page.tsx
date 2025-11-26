@@ -1,8 +1,9 @@
 // app/public-profile/[id]/review/page.tsx
+
 "use client";
 
 import { useState } from "react";
-import Stars from "@/components/stars";
+import Stars from "@/components/Stars"; // ⬅ à adapter selon le vrai nom du fichier
 
 
 
