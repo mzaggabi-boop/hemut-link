@@ -1,0 +1,118 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Button from "../../../components/Button";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8081";
+
+type MissionStatus = "TERMINEE" | "PAID" | "EN_COURS" | "ACCEPTEE" | "ANNULEE" | string;
+
+interface Mission {
+  id: string;
+  type: string;
+  title: string;
+  startAddress: string;
+  endAddress: string;
+  budget: number;
+  status: MissionStatus;
+}
+
+export default function MissionCompletedPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params?.id;
+
+  const [mission, setMission] = useState<Mission | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadMission = async () => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/go/mission/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      setMission(data.mission);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadMission();
+  }, []);
+
+  if (loading) {
+    return <div className="p-6 text-neutral-300">Chargement…</div>;
+  }
+
+  if (!mission) {
+    return <div className="p-6 text-red-400">Mission introuvable.</div>;
+  }
+
+  const isPaid = mission.status === "PAID";
+
+  return (
+    <div className="p-6 space-y-6 max-w-3xl">
+      <Button variant="secondary" onClick={() => router.push("/go")}>
+        ← Retour Go
+      </Button>
+
+      <h1 className="text-2xl font-semibold text-amber-400">
+        Mission terminée ✔
+      </h1>
+
+      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-4">
+        <p className="text-neutral-300">
+          Mission :{" "}
+          <span className="text-amber-400 font-semibold">{mission.title}</span>
+        </p>
+
+        <p className="text-neutral-400 text-sm">Type : {mission.type}</p>
+
+        <p className="text-neutral-400 text-sm">
+          Départ : {mission.startAddress}
+        </p>
+
+        <p className="text-neutral-400 text-sm">
+          Arrivée : {mission.endAddress}
+        </p>
+
+        <p className="text-neutral-200 font-medium text-lg">
+          Budget : {mission.budget} €
+        </p>
+
+        <div className="bg-neutral-800/40 rounded p-4 text-neutral-300 text-sm space-y-1">
+          <p className="font-semibold">
+            Statut de paiement :{" "}
+            {isPaid ? (
+              <span className="text-green-400">Payée ✅</span>
+            ) : (
+              <span className="text-amber-400">En attente de paiement</span>
+            )}
+          </p>
+          <p className="text-neutral-400 text-xs">
+            Le statut est mis à jour automatiquement via Stripe (webhook).
+          </p>
+        </div>
+
+        <Button
+          variant="primary"
+          className="w-full mt-4"
+          onClick={() => router.push("/go/my-earnings")}
+        >
+          Voir mes revenus Hemut-link Go →
+        </Button>
+      </div>
+    </div>
+  );
+}
+

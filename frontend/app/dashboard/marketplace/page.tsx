@@ -1,0 +1,172 @@
+// app/dashboard/marketplace/page.tsx
+import prisma from "@/lib/prisma";
+import Link from "next/link";
+
+// FORMATTEUR DE PRIX
+function formatCurrency(value: number) {
+  return value.toLocaleString("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  });
+}
+
+export default async function MarketplacePage({
+  searchParams,
+}: {
+  searchParams: { q?: string; category?: string };
+}) {
+  const q = (searchParams.q ?? "").trim();
+  const category = (searchParams.category ?? "").trim();
+
+  /**
+   * BUILD DU WHERE CLAUSE
+   * On évite les objets vides pour garder les requêtes propres.
+   */
+  const whereClause: any = { AND: [] };
+
+  if (q.length > 0) {
+    whereClause.AND.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (category.length > 0) {
+    whereClause.AND.push({
+      category: { equals: category },
+    });
+  }
+
+  // Si AND est vide → on le supprime pour éviter AND: [] inutile
+  if (whereClause.AND.length === 0) {
+    delete whereClause.AND;
+  }
+
+  // FETCH DES PRODUITS
+  const products = await prisma.product.findMany({
+    where: whereClause,
+    orderBy: { createdAt: "desc" },
+    include: {
+      seller: true,
+    },
+  });
+
+  // FETCH DES CATÉGORIES UNIQUES
+  const categories = await prisma.product.findMany({
+    select: { category: true },
+    where: { category: { not: null } },
+    distinct: ["category"],
+    orderBy: { category: "asc" },
+  });
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+      {/* HEADER */}
+      <header className="flex flex-col gap-2 border-b border-gray-100 pb-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">
+            Marketplace — Catalogue
+          </h1>
+          <p className="text-xs text-gray-600">
+            Parcourez les produits publiés par les professionnels du bâtiment.
+          </p>
+        </div>
+
+        <Link
+          href="/dashboard/marketplace/new"
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+        >
+          + Publier un produit
+        </Link>
+      </header>
+
+      {/* BARRE DE RECHERCHE + FILTRES */}
+      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
+        <form className="flex flex-col gap-3 md:flex-row md:items-center">
+          {/* RECHERCHE */}
+          <input
+            name="q"
+            defaultValue={q}
+            type="text"
+            placeholder="Rechercher un produit..."
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+
+          {/* FILTRE CATÉGORIE */}
+          <select
+            name="category"
+            defaultValue={category}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">Toutes catégories</option>
+            {categories.map((c, i) => (
+              <option key={i} value={c.category ?? ""}>
+                {c.category}
+              </option>
+            ))}
+          </select>
+
+          {/* BOUTON */}
+          <button
+            type="submit"
+            className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 transition"
+          >
+            Filtrer
+          </button>
+        </form>
+      </section>
+
+      {/* LISTE DES PRODUITS */}
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {products.length === 0 ? (
+          <p className="col-span-full text-xs text-gray-500">
+            Aucun produit trouvé avec ces critères.
+          </p>
+        ) : (
+          products.map((product) => (
+            <Link
+              key={product.id}
+              href={`/dashboard/marketplace/${product.id}`}
+              className="block rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition"
+            >
+              <div className="aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 mb-3">
+                {/* IMAGE */}
+                {product.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={product.image}
+                    alt={product.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-gray-400 text-xs">
+                    Pas d'image
+                  </div>
+                )}
+              </div>
+
+              <h3 className="text-sm font-semibold text-gray-900 truncate">
+                {product.title}
+              </h3>
+
+              {product.seller && (
+                <p className="mt-0.5 text-[11px] text-gray-500">
+                  Vendeur :{" "}
+                  <span className="font-medium text-gray-800">
+                    {product.seller.firstname} {product.seller.lastname}
+                  </span>
+                </p>
+              )}
+
+              <p className="mt-2 text-sm font-semibold text-gray-900">
+                {formatCurrency(product.price ?? 0)}
+              </p>
+            </Link>
+          ))
+        )}
+      </section>
+    </main>
+  );
+}

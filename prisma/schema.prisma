@@ -1,0 +1,467 @@
+// =============================
+// Hemut-link - Prisma Schema
+// Compatible Prisma 5.14
+// =============================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------
+// ENUMS
+// ---------------------------------------------------
+
+enum UserRole {
+  ARTISAN
+  PARTICULIER
+  FOURNISSEUR
+  ASSUREUR
+  ARCHITECTE
+  DECORATEUR
+  SYNDIC
+  AGENCE_IMMO
+  DONNEUR_ORDRE
+  CLIENT
+  ADMIN
+}
+
+enum JobStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+enum GoJobStep {
+  ARTISAN_EN_ROUTE
+  ARTISAN_ARRIVE
+  TRAVAIL_EN_COURS
+  TRAVAIL_TERMINE
+  EN_ATTENTE_VALIDATION_CLIENT
+}
+
+// ---------------------------------------------------
+// USERS
+// ---------------------------------------------------
+
+model User {
+  id          Int      @id @default(autoincrement())
+  supabaseId  String?  @unique
+  email       String   @unique
+  phone       String?
+  role        UserRole
+  firstname   String?
+  lastname    String?
+  companyName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  businessProfile  BusinessProfile?
+  jobsArtisan      GoJob[]               @relation("ArtisanJobs")
+  jobsClient       GoJob[]               @relation("ClientJobs")
+  favorites        MarketplaceFavorite[]
+  cart             CartItem[]
+  products         MarketplaceProduct[]
+  receivedMessages Message[]             @relation("ReceivedMessages")
+  sentMessages     Message[]             @relation("SentMessages")
+  notifications    Notification[]
+  orders           Order[]
+  paymentsReceived Payment[]             @relation("ReceiverPayments")
+  paymentsSent     Payment[]             @relation("SenderPayments")
+  reviewsReceived  Review[]              @relation("ArtisanReviews")
+  reviewsGiven     Review[]              @relation("UserReviews")
+  goProgressSteps  GoJobProgress[]
+
+  marketplaceOrdersBuyer  MarketplaceOrder[] @relation("BuyerOrders")
+  marketplaceOrdersSeller MarketplaceOrder[] @relation("SellerOrders")
+
+  disputeMessages         DisputeMessage[]
+  MarketplaceOrderMessage MarketplaceOrderMessage[]
+}
+
+// ---------------------------------------------------
+// BUSINESS PROFILES
+// ---------------------------------------------------
+
+model BusinessProfile {
+  id             Int     @id @default(autoincrement())
+  userId         Int     @unique
+  siret          String?
+  address        String?
+  certifications String?
+  insuranceDocs  String?
+  zones          String?
+  description    String?
+  rating         Float?  @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ---------------------------------------------------
+// MARKETPLACE
+// ---------------------------------------------------
+
+model MarketplaceCategory {
+  id       Int                  @id @default(autoincrement())
+  name     String               @unique
+  products MarketplaceProduct[]
+}
+
+model MarketplaceProduct {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  price       Float
+  condition   String?
+  createdAt   DateTime @default(now())
+
+  sellerId Int
+  seller   User @relation(fields: [sellerId], references: [id])
+
+  categoryId Int?
+  category   MarketplaceCategory? @relation(fields: [categoryId], references: [id])
+
+  coverImageUrl String?
+
+  photos     ProductPhoto[]
+  images     ProductImage[]
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  favorites  MarketplaceFavorite[]
+  tags       ProductTag[]
+
+  marketplaceOrders MarketplaceOrder[]
+}
+
+model ProductPhoto {
+  id        Int                @id @default(autoincrement())
+  url       String
+  productId Int
+  product   MarketplaceProduct @relation(fields: [productId], references: [id])
+}
+
+model ProductImage {
+  id           Int                @id @default(autoincrement())
+  productId    Int
+  product      MarketplaceProduct @relation(fields: [productId], references: [id])
+  originalUrl  String
+  resizedUrl   String
+  thumbnailUrl String
+  createdAt    DateTime           @default(now())
+}
+
+// ---------------------------------------------------
+// FAVORITES
+// ---------------------------------------------------
+
+model MarketplaceFavorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+
+  user    User               @relation(fields: [userId], references: [id])
+  product MarketplaceProduct @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+// ---------------------------------------------------
+// CART
+// ---------------------------------------------------
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user    User               @relation(fields: [userId], references: [id])
+  product MarketplaceProduct @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+}
+
+// ---------------------------------------------------
+// GO JOBS
+// ---------------------------------------------------
+
+model GoJob {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  price       Float?
+  createdAt   DateTime  @default(now())
+  status      JobStatus @default(PENDING)
+
+  clientId Int
+  client   User @relation("ClientJobs", fields: [clientId], references: [id])
+
+  artisanId Int?
+  artisan   User? @relation("ArtisanJobs", fields: [artisanId], references: [id])
+
+  photos   JobPhoto[]
+  payments Payment[]
+
+  currentStep GoJobStep?
+  progress    GoJobProgress[]
+}
+
+model JobPhoto {
+  id    Int    @id @default(autoincrement())
+  url   String
+  jobId Int
+  job   GoJob  @relation(fields: [jobId], references: [id])
+}
+
+model GoJobProgress {
+  id        Int       @id @default(autoincrement())
+  jobId     Int
+  step      GoJobStep
+  createdAt DateTime  @default(now())
+
+  actorId Int?
+  job     GoJob @relation(fields: [jobId], references: [id])
+  actor   User? @relation(fields: [actorId], references: [id])
+
+  @@index([jobId, createdAt])
+}
+
+// ---------------------------------------------------
+// ORDERS
+// ---------------------------------------------------
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  buyerId     Int
+  status      OrderStatus @default(PENDING)
+  totalAmount Float
+  currency    String      @default("eur")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now()) @updatedAt
+
+  buyer    User        @relation(fields: [buyerId], references: [id])
+  items    OrderItem[]
+  payments Payment[]
+  invoices Invoice[]
+}
+
+model OrderItem {
+  id        Int   @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int   @default(1)
+  unitPrice Float
+
+  order   Order              @relation(fields: [orderId], references: [id])
+  product MarketplaceProduct @relation(fields: [productId], references: [id])
+}
+
+// ---------------------------------------------------
+// PAYMENTS
+// ---------------------------------------------------
+
+model Payment {
+  id                    Int           @id @default(autoincrement())
+  jobId                 Int?
+  orderId               Int?
+  senderId              Int
+  receiverId            Int
+  amount                Float
+  commission            Float
+  stripePaymentIntentId String
+  status                PaymentStatus @default(PENDING)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  job      GoJob? @relation(fields: [jobId], references: [id])
+  order    Order? @relation(fields: [orderId], references: [id])
+  sender   User   @relation("SenderPayments", fields: [senderId], references: [id])
+  receiver User   @relation("ReceiverPayments", fields: [receiverId], references: [id])
+}
+
+// ---------------------------------------------------
+// INVOICES
+// ---------------------------------------------------
+
+model Invoice {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  url       String
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+// ---------------------------------------------------
+// ORDER CHAT SYSTEM
+// ---------------------------------------------------
+
+model MarketplaceOrderMessage {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  senderId  Int
+  content   String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+
+  order  MarketplaceOrder @relation(fields: [orderId], references: [id])
+  sender User             @relation(fields: [senderId], references: [id])
+
+  @@index([orderId])
+}
+
+// ---------------------------------------------------
+// STRIPE EVENTS
+// ---------------------------------------------------
+
+model StripeEvent {
+  id        Int      @id @default(autoincrement())
+  eventId   String   @unique
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------
+// REVIEWS
+// ---------------------------------------------------
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  userId    Int
+  artisanId Int
+
+  user    User @relation("UserReviews", fields: [userId], references: [id])
+  artisan User @relation("ArtisanReviews", fields: [artisanId], references: [id])
+}
+
+// ---------------------------------------------------
+// MESSAGING
+// ---------------------------------------------------
+
+model Conversation {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  messages  Message[]
+}
+
+model Message {
+  id             Int      @id @default(autoincrement())
+  content        String
+  createdAt      DateTime @default(now())
+  conversationId Int
+  senderId       Int
+  receiverId     Int
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+  receiver     User         @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+// ---------------------------------------------------
+// NOTIFICATIONS
+// ---------------------------------------------------
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  url       String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    Int
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ---------------------------------------------------
+// TAGS SYSTEM
+// ---------------------------------------------------
+
+model Tag {
+  id       Int          @id @default(autoincrement())
+  name     String       @unique
+  products ProductTag[]
+}
+
+model ProductTag {
+  id        Int @id @default(autoincrement())
+  productId Int
+  tagId     Int
+
+  product MarketplaceProduct @relation(fields: [productId], references: [id])
+  tag     Tag                @relation(fields: [tagId], references: [id])
+
+  @@unique([productId, tagId])
+}
+
+// ---------------------------------------------------
+// MARKETPLACE ORDER (Stripe Checkout)
+// ---------------------------------------------------
+
+model MarketplaceOrder {
+  id        Int    @id @default(autoincrement())
+  buyerId   Int
+  sellerId  Int
+  productId Int
+  total     Int
+  currency  String @default("eur")
+  status    String @default("pending")
+
+  stripeCheckoutSessionId String? @unique
+  stripePaymentStatus     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  buyer   User               @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller  User               @relation("SellerOrders", fields: [sellerId], references: [id])
+  product MarketplaceProduct @relation(fields: [productId], references: [id])
+
+  disputeMessages         DisputeMessage[]
+  MarketplaceOrderMessage MarketplaceOrderMessage[]
+}
+
+// ---------------------------------------------------
+// DISPUTE MESSAGES (LITIGES MARKETPLACE)
+// ---------------------------------------------------
+
+model DisputeMessage {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  senderId  Int
+  content   String
+  createdAt DateTime @default(now())
+
+  order  MarketplaceOrder @relation(fields: [orderId], references: [id])
+  sender User             @relation(fields: [senderId], references: [id])
+
+  @@index([orderId])
+}
