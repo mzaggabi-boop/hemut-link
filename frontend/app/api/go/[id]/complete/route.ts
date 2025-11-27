@@ -1,14 +1,15 @@
+// frontend/app/api/go/[id]/complete/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { notifyGoClientCompleted } from "@/lib/notifications";
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: { id: string } }   // ✅ FIX Next.js 16
 ) {
   try {
-    const { id } = await context.params;
-    const jobId = Number(id);
+    const jobId = Number(context.params.id);
 
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
@@ -29,6 +30,7 @@ export async function POST(
       );
     }
 
+    // Mise à jour de la mission
     await prisma.goJob.update({
       where: { id: jobId },
       data: {
@@ -37,6 +39,7 @@ export async function POST(
       },
     });
 
+    // Historique
     await prisma.goJobProgress.create({
       data: {
         jobId,
@@ -45,6 +48,7 @@ export async function POST(
       },
     });
 
+    // Notification
     await notifyGoClientCompleted({
       clientId: job.clientId,
       jobId,
@@ -59,3 +63,4 @@ export async function POST(
     );
   }
 }
+
