@@ -1,14 +1,14 @@
+// frontend/app/api/go/[id]/review/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: { id: string } }   // ✅ FIX IMPORTANT
 ) {
   try {
-    const { id } = await context.params;
-    const jobId = Number(id);
+    const jobId = Number(context.params.id);
 
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
@@ -76,7 +76,7 @@ export async function POST(
       );
     }
 
-    // Vérifier si déjà évalué
+    // Déjà évalué ?
     const existing = await prisma.review.findFirst({
       where: { userId: dbUser.id, artisanId: job.artisanId, jobId },
     });
