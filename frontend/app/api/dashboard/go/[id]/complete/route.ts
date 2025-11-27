@@ -1,16 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { notifyGoClientCompleted } from "@/lib/notifications";
 
 export async function POST(
-  req: Request,
-  { params }: { params: { jobId: string } }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { jobId } = params; // <-- destructuration propre Next.js 16
-    const id = parseInt(jobId, 10);
+    const jobId = Number(params.id);
 
-    if (isNaN(id)) {
+    if (Number.isNaN(jobId)) {
       return NextResponse.json(
         { error: "ID mission non valide." },
         { status: 400 }
@@ -18,7 +17,7 @@ export async function POST(
     }
 
     const job = await prisma.goJob.findUnique({
-      where: { id },
+      where: { id: jobId },
       include: { client: true },
     });
 
@@ -30,7 +29,7 @@ export async function POST(
     }
 
     await prisma.goJob.update({
-      where: { id },
+      where: { id: jobId },
       data: {
         status: "COMPLETED",
         currentStep: "TRAVAIL_TERMINE",
@@ -39,7 +38,7 @@ export async function POST(
 
     await prisma.goJobProgress.create({
       data: {
-        jobId: id,
+        jobId,
         step: "TRAVAIL_TERMINE",
         actorId: job.artisanId ?? null,
       },
@@ -47,7 +46,7 @@ export async function POST(
 
     await notifyGoClientCompleted({
       clientId: job.clientId,
-      jobId: id,
+      jobId,
     });
 
     return NextResponse.json({ ok: true });
