@@ -13,29 +13,14 @@ export async function POST(
       return NextResponse.json({ error: "ID invalide." }, { status: 400 });
     }
 
-    const job = await prisma.goJob.findUnique({ where: { id: jobId } });
-
-    if (!job) {
-      return NextResponse.json(
-        { error: "Mission introuvable." },
-        { status: 404 }
-      );
-    }
-
     await prisma.goJob.update({
       where: { id: jobId },
-      data: {
-        status: "ACCEPTED",
-        currentStep: "ACCEPTEE_ARTISAN",
-      },
+      data: { status: "CANCELLED" },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Mission acceptée.",
-    });
+    return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Erreur ACCEPT:", error);
+    console.error("Erreur CANCEL:", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }
