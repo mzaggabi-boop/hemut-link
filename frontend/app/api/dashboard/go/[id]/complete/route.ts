@@ -1,13 +1,13 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { notifyGoClientCompleted } from "@/lib/notifications";
 
 export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
   try {
-    const jobId = Number(params.id);
+    const jobId = Number(context.params.id);
 
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
@@ -28,6 +28,7 @@ export async function POST(
       );
     }
 
+    // Mise à jour de l'état
     await prisma.goJob.update({
       where: { id: jobId },
       data: {
@@ -36,6 +37,7 @@ export async function POST(
       },
     });
 
+    // Historique
     await prisma.goJobProgress.create({
       data: {
         jobId,
@@ -44,6 +46,7 @@ export async function POST(
       },
     });
 
+    // Envoi notification client
     await notifyGoClientCompleted({
       clientId: job.clientId,
       jobId,
