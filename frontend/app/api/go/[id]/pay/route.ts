@@ -1,3 +1,4 @@
+// frontend/app/api/go/[id]/pay/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import Stripe from "stripe";
@@ -9,13 +10,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: { id: string } }   // ✅ FIX Next.js 16
 ) {
   try {
-    const { id } = await context.params;
-    const jobId = Number(id);
+    const jobId = Number(context.params.id);
 
-    if (isNaN(jobId)) {
+    if (Number.isNaN(jobId)) {
       return NextResponse.json({ error: "ID invalide." }, { status: 400 });
     }
 
@@ -79,7 +79,7 @@ export async function POST(
 
     const amount = Math.round(job.price * 100);
 
-    // CREATION PAYMENT INTENT
+    // CRÉATION PAYMENT INTENT
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "eur",
@@ -90,7 +90,7 @@ export async function POST(
       },
     });
 
-    // Enregistrer en base
+    // Sauvegarde en base
     await prisma.payment.create({
       data: {
         jobId: job.id,
@@ -115,3 +115,4 @@ export async function POST(
     );
   }
 }
+
