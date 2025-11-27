@@ -1,14 +1,16 @@
 // app/api/dashboard/go/[id]/complete/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
-  req: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    context: { params: Promise<{ id: string }> }
+    // Récupération de l'ID depuis les params
+    const { id } = await context.params;
+    const jobId = Number(id);
 
     if (isNaN(jobId)) {
       return NextResponse.json(
@@ -17,7 +19,7 @@ export async function POST(
       );
     }
 
-    // AUTH
+    // Auth
     const supabase = supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -41,7 +43,7 @@ export async function POST(
 
     const artisanId = dbUser.id;
 
-    // RÉCUPÉRER LA MISSION
+    // Récupération de la mission
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
       include: {
@@ -57,7 +59,7 @@ export async function POST(
       );
     }
 
-    // SEUL L’ARTISAN QUI A ACCEPTÉ PEUT TERMINER
+    // Seul l’artisan assigné peut terminer
     if (job.artisanId !== artisanId) {
       return NextResponse.json(
         { error: "Vous ne pouvez pas terminer cette mission." },
@@ -65,7 +67,7 @@ export async function POST(
       );
     }
 
-    // SI DÉJÀ TERMINÉE
+    // Déjà terminée
     if (job.status === "COMPLETED") {
       return NextResponse.json(
         { success: true, message: "Mission déjà marquée terminée." },
@@ -73,13 +75,13 @@ export async function POST(
       );
     }
 
-    // MARQUER LA MISSION COMME TERMINÉE
+    // Mise à jour du statut
     await prisma.goJob.update({
       where: { id: jobId },
       data: { status: "COMPLETED" },
     });
 
-    // METTRE À JOUR LE PAIEMENT SI IL EXISTE
+    // Si paiement associé → valider
     if (job.payments.length > 0) {
       await prisma.payment.updateMany({
         where: { jobId },
@@ -91,6 +93,7 @@ export async function POST(
       { success: true, message: "Mission terminée avec succès !" },
       { status: 200 }
     );
+
   } catch (err) {
     console.error("GO COMPLETE ERROR:", err);
     return NextResponse.json(
