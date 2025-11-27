@@ -5,9 +5,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Input } from "../../../components/Input";
-import { Button } from "../../../components/Button";
 
+import Input from "../../../components/Input";
+import Button from "../../../components/Button";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,11 +32,14 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
 
       const data = await res.json();
 
@@ -46,7 +49,7 @@ export default function RegisterPage() {
         return;
       }
 
-      // Login direct après register
+      // Login automatique
       localStorage.setItem("hemut_token", data.token);
 
       router.push("/dashboard");
@@ -60,7 +63,6 @@ export default function RegisterPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-black px-6">
       <div className="max-w-md w-full bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow">
-
         <h1 className="text-3xl font-bold text-center mb-6">
           Créer un compte
         </h1>
