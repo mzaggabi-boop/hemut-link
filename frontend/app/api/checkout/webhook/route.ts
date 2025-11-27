@@ -1,52 +1,57 @@
+// app/api/checkout/webhook/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 
-export const runtime = "nodejs"; // Stripe ne fonctionne pas en Edge
-export const dynamic = "force-dynamic"; // Les webhooks doivent être dynamiques
-export const preferredRegion = "fra1"; // recommandé sur Vercel
-export const bodyParser = false; // Nouvelle méthode Next.js 15/16
-
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2023-10-16",
-  });
-
-  const rawBody = await req.arrayBuffer();
-  const signature = req.headers.get("stripe-signature");
-
-  if (!signature) {
-    return new NextResponse("Missing signature", { status: 400 });
-  }
-
-  let event;
-
   try {
-    event = stripe.webhooks.constructEvent(
-      Buffer.from(rawBody),
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+    // ❗ Stripe sans apiVersion (corrige l’erreur Vercel)
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+    const rawBody = await req.arrayBuffer();
+    const signature = req.headers.get("stripe-signature") as string;
+
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        Buffer.from(rawBody),
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
+    } catch (err: any) {
+      console.error("Webhook signature error:", err.message);
+      return NextResponse.json(
+        { error: `Signature invalid: ${err.message}` },
+        { status: 400 }
+      );
+    }
+
+    // 🎯 TRAITEMENT DES ÉVÉNEMENTS
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      const orderId = Number(session.metadata?.orderId);
+      if (!orderId) {
+        console.error("Webhook: orderId manquant !");
+        return NextResponse.json({ ok: true });
+      }
+
+      await prisma.marketplaceOrder.update({
+        where: { id: orderId },
+        data: { status: "paid" },
+      });
+
+      console.log("Commande payée :", orderId);
+    }
+
+    return NextResponse.json({ received: true });
+  } catch (err) {
+    console.error("Webhook global error:", err);
+    return NextResponse.json(
+      { error: "Erreur interne webhook." },
+      { status: 500 }
     );
-  } catch (err: any) {
-    console.error("❌ constructEvent error :", err.message);
-    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
   }
-
-  // 🔥 Traitement de l'événement Stripe
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-
-    console.log("🔥 Session Stripe complétée :", session.id);
-
-    await prisma.payment.create({
-      data: {
-        stripeSessionId: session.id,
-        amount: session.amount_total ?? 0,
-        userEmail: session.customer_details?.email ?? "",
-      },
-    });
-  }
-
-  return NextResponse.json({ received: true });
 }
-
