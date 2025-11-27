@@ -3,9 +3,10 @@ import prisma from "@/lib/prisma";
 
 export async function POST(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }  // ✅ Promise ajoutée
 ) {
-  const orderId = Number(context.params.id);
+  const { id } = await context.params;  // ✅ await ajouté
+  const orderId = Number(id);
   const body = await req.json();
   const { status } = body;
 

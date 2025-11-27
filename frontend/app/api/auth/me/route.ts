@@ -23,3 +23,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ user: null }, { status: 200 });
   }
 }
+

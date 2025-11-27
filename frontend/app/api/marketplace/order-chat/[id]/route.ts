@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
+// ---------- GET ----------
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const orderId = Number(params.id);
+  const { id } = await context.params;
+  const orderId = Number(id);
 
   const messages = await prisma.marketplaceOrderMessage.findMany({
     where: { orderId },
@@ -18,11 +20,14 @@ export async function GET(
   return NextResponse.json({ messages });
 }
 
+// ---------- POST ----------
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const orderId = Number(params.id);
+  const { id } = await context.params;
+  const orderId = Number(id);
+
   const { content, imageUrl } = await req.json();
 
   // Auth

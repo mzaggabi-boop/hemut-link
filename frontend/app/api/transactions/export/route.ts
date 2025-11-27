@@ -75,3 +75,4 @@ export async function GET() {
     return new NextResponse("Erreur serveur", { status: 500 });
   }
 }
+
