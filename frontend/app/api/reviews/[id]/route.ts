@@ -1,5 +1,5 @@
 // app/api/reviews/stats/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 /**
@@ -12,11 +12,12 @@ import prisma from "@/lib/prisma";
  * }
  */
 export async function GET(
-  req: Request,
-  context: { params: { id: string } }
+  _req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const artisanId = Number(context.params.id);
+    const { id } = await context.params;
+    const artisanId = Number(id);
 
     if (Number.isNaN(artisanId)) {
       return NextResponse.json(
@@ -25,7 +26,7 @@ export async function GET(
       );
     }
 
-    // Récupérer toutes les notes
+    // Récupérer stats
     const stats = await prisma.review.groupBy({
       by: ["artisanId"],
       where: { artisanId },
@@ -33,14 +34,9 @@ export async function GET(
       _count: { rating: true },
     });
 
-    // Aucun avis ?
     if (stats.length === 0) {
       return NextResponse.json(
-        {
-          artisanId,
-          average: 0,
-          count: 0,
-        },
+        { artisanId, average: 0, count: 0 },
         { status: 200 }
       );
     }
@@ -55,7 +51,7 @@ export async function GET(
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error("REVIEWS STATS ERROR:", err);
     return NextResponse.json(
       { error: "Erreur serveur." },
