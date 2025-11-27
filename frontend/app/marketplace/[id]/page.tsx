@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import { buyMarketplaceItem } from "@/services/MarketplacePaymentService";
 
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8081";
 
 interface MarketItem {
@@ -94,3 +93,4 @@ export default function MarketplaceItemPage() {
     </div>
   );
 }
+
