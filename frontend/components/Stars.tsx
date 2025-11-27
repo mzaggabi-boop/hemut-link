@@ -1,10 +1,8 @@
-// frontend/components/Stars.tsx
-
 "use client";
 
 interface StarsProps {
-  value?: number;      // nombre d'étoiles remplies
-  size?: number;       // taille (px)
+  value?: number;
+  size?: number;
 }
 
 export default function Stars({ value = 0, size = 24 }: StarsProps) {
@@ -25,9 +23,7 @@ export default function Stars({ value = 0, size = 24 }: StarsProps) {
           strokeLinejoin="round"
           className="mr-1"
         >
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 
-          18.18 21.02 12 17.77 5.82 21.02 7 
-          14.14 2 9.27 8.91 8.26 12 2" />
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
       ))}
     </div>
