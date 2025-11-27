@@ -1,4 +1,8 @@
+// app/api/go/[id]/accept/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
   request: NextRequest,
@@ -9,17 +13,52 @@ export async function POST(
     const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
-      return NextResponse.json({ error: "ID invalide." }, { status: 400 });
+      return NextResponse.json(
+        { error: "ID invalide." },
+        { status: 400 }
+      );
     }
 
-    await prisma.goJob.update({
-      where: { id: jobId },
-      data: { status: "CANCELLED" },
+    const supabase = supabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Non authentifié." },
+        { status: 401 }
+      );
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { supabaseId: user.id },
     });
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error("Erreur CANCEL:", error);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "Utilisateur introuvable." },
+        { status: 404 }
+      );
+    }
+
+    // Accepter la mission
+    await prisma.goJob.update({
+      where: { id: jobId },
+      data: {
+        artisanId: dbUser.id,
+        status: "ACCEPTED",
+      },
+    });
+
+    return NextResponse.json(
+      { success: true, message: "Mission acceptée." },
+      { status: 200 }
+    );
+
+  } catch (err) {
+    console.error("GO ACCEPT ERROR:", err);
+    return NextResponse.json(
+      { error: "Erreur serveur." },
+      { status: 500 }
+    );
   }
 }
