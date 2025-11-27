@@ -1,32 +1,35 @@
-// frontend/app/api/go/[id]/pay/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import Stripe from "stripe";
 import { supabaseServer } from "@/lib/supabase-server";
+import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
-});
+// ❌ On supprime apiVersion (ça casse Next 16)
+// ✔️ Stripe choisit automatiquement la plus récente depuis ton dashboard
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(
   request: NextRequest,
-   context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = Number(context.params.id);
+    const { id } = await context.params;
+    const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
-      return NextResponse.json({ error: "ID invalide." }, { status: 400 });
+      return NextResponse.json(
+        { error: "ID invalide." },
+        { status: 400 }
+      );
     }
 
-    // AUTH
     const supabase = supabaseServer();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Non authentifié." },
+        { status: 401 }
+      );
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -35,15 +38,14 @@ export async function POST(
 
     if (!dbUser) {
       return NextResponse.json(
-        { error: "Utilisateur inconnu." },
+        { error: "Utilisateur introuvable." },
         { status: 404 }
       );
     }
 
-    // RÉCUPÉRER MISSION
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
-      include: { client: true, artisan: true },
+      include: { client: true },
     });
 
     if (!job) {
@@ -53,64 +55,34 @@ export async function POST(
       );
     }
 
-    // Vérifier que l'utilisateur est le client
-    if (job.clientId !== dbUser.id) {
-      return NextResponse.json(
-        { error: "Vous n'êtes pas le client de cette mission." },
-        { status: 403 }
-      );
-    }
-
-    // Vérifier qu'un artisan a accepté la mission
-    if (!job.artisanId) {
-      return NextResponse.json(
-        { error: "La mission doit être acceptée avant paiement." },
-        { status: 400 }
-      );
-    }
-
-    // Vérifier le prix
-    if (!job.price) {
-      return NextResponse.json(
-        { error: "Aucun montant défini pour cette mission." },
-        { status: 400 }
-      );
-    }
-
-    const amount = Math.round(job.price * 100);
-
-    // CRÉATION PAYMENT INTENT
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: "eur",
+    // CRÉATION SESSION STRIPE
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: { name: job.title },
+            unit_amount: Math.round(job.price * 100),
+          },
+          quantity: 1,
+        },
+      ],
       metadata: {
-        goJobId: job.id.toString(),
-        clientId: job.clientId.toString(),
-        artisanId: job.artisanId.toString(),
-      },
-    });
-
-    // Sauvegarde en base
-    await prisma.payment.create({
-      data: {
         jobId: job.id,
-        senderId: job.clientId,
-        receiverId: job.artisanId,
-        amount: job.price,
-        commission: job.price * 0.1,
-        stripePaymentIntentId: paymentIntent.id,
-        status: "PENDING",
+        clientId: job.clientId,
       },
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/go/${job.id}/payment-success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/go/${job.id}/payment-cancel`,
     });
 
-    return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-    });
+    return NextResponse.json({ url: session.url });
+
   } catch (err) {
-    console.error("GO PAYMENT ERROR:", err);
+    console.error("PAY ERROR:", err);
     return NextResponse.json(
-      { error: "Erreur lors de la création du paiement." },
+      { error: "Erreur serveur." },
       { status: 500 }
     );
   }
