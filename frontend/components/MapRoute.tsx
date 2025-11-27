@@ -1,33 +1,26 @@
-// frontend/components/MapRoute.tsx
-
 "use client";
 
 import { useEffect, useRef } from "react";
 
 interface MapRouteProps {
-  start?: [number, number]; // [lng, lat]
-  end?: [number, number];   // [lng, lat]
+  start?: [number, number];
+  end?: [number, number];
 }
 
 export default function MapRoute({ start, end }: MapRouteProps) {
-  const mapRef = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current) return;
-
-    // Ici tu pourras mettre ta logique Mapbox si besoin.
-    // Pour l’instant on affiche un bloc simple pour éviter les erreurs Vercel.
-
-    console.log("MapRoute initialized with:", { start, end });
+    // Placeholder MapBox or Map logic
+    console.log("Rendering MapRoute", { start, end });
   }, [start, end]);
 
   return (
     <div
-      ref={mapRef}
-      className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg"
+      ref={ref}
+      className="w-full h-64 bg-neutral-800 rounded-lg flex items-center justify-center text-neutral-400"
     >
-      <span className="text-gray-600 text-sm">MapRoute placeholder</span>
+      Carte en cours…
     </div>
   );
 }
-
