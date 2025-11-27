@@ -3,9 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import Stars from "@/components/Stars"; // ⬅ à adapter selon le vrai nom du fichier
-
-
+import Stars from "@/components/Stars";
 
 export default function LeaveReviewPage({
   params,
@@ -29,7 +27,7 @@ export default function LeaveReviewPage({
     });
 
     if (!res.ok) {
-      const j = await res.json();
+      const j = await res.json().catch(() => ({}));
       setError(j.error || "Erreur.");
       return;
     }
@@ -57,7 +55,7 @@ export default function LeaveReviewPage({
                 <button
                   key={s}
                   onClick={() => setRating(s)}
-                  className={`p-1 rounded ${
+                  className={`p-1 rounded transition ${
                     rating === s ? "bg-yellow-300" : "bg-gray-100"
                   }`}
                 >
@@ -74,6 +72,7 @@ export default function LeaveReviewPage({
               rows={4}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
+              placeholder="Partagez votre expérience…"
             />
           </div>
 

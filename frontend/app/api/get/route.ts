@@ -10,7 +10,10 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      );
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -29,10 +32,10 @@ export async function GET() {
       email: dbUser.email,
       phone: dbUser.phone,
       companyName: dbUser.companyName,
-      ...dbUser.businessProfile,
+      businessProfile: dbUser.businessProfile,
     });
-  } catch (e) {
-    console.error("GET PROFILE ERROR", e);
+  } catch (error) {
+    console.error("GET PROFILE ERROR", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
