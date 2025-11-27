@@ -5,9 +5,10 @@ import stream from "stream";
 
 export async function GET(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }  // ✅ Promise ajoutée
 ) {
-  const orderId = Number(context.params.id);
+  const { id } = await context.params;  // ✅ await ajouté
+  const orderId = Number(id);
 
   const order = await prisma.marketplaceOrder.findUnique({
     where: { id: orderId },
