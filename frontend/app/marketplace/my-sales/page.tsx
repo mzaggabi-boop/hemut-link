@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Button from "../../components/Button";
+import Button from "../../../components/Button";
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8081";
 
