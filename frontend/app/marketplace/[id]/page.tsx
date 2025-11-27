@@ -69,9 +69,13 @@ export default function MarketplaceItemPage() {
       <h1 className="text-2xl font-semibold text-amber-400">{item.title}</h1>
 
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-4">
-        <p className="text-neutral-400 text-sm">Vendeur : {item.seller.fullName}</p>
+        <p className="text-neutral-400 text-sm">
+          Vendeur : {item.seller.fullName}
+        </p>
 
-        <p className="text-neutral-300 whitespace-pre-line">{item.description}</p>
+        <p className="text-neutral-300 whitespace-pre-line">
+          {item.description}
+        </p>
 
         <p className="text-neutral-200 font-medium text-xl">
           Prix : {item.price} €
@@ -93,4 +97,5 @@ export default function MarketplaceItemPage() {
     </div>
   );
 }
+
 
