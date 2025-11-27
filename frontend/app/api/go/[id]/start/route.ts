@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }   // ✅ Fix obligatoire Next16
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const jobId = Number(context.params.id);

@@ -5,7 +5,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
   req: Request,
-  context: { params: { id: string } }
+   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const jobId = parseInt(context.params.id);

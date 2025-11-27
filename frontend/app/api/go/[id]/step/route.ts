@@ -9,10 +9,12 @@ import {
 
 export async function POST(
   req: Request,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }  // ✅ FIX: Promise ajoutée
 ) {
   try {
-    const jobId = Number(params.jobId);
+    const { jobId: jobIdStr } = await params;  // ✅ FIX: await ajouté
+    const jobId = Number(jobIdStr);
+    
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
         { error: "ID mission non valide." },
@@ -43,13 +45,13 @@ export async function POST(
       );
     }
 
-    // Mise à jour de l’étape actuelle
+    // Mise à jour de l'étape actuelle
     await prisma.goJob.update({
       where: { id: jobId },
       data: { currentStep: step },
     });
 
-    // Ajout à l’historique
+    // Ajout à l'historique
     await prisma.goJobProgress.create({
       data: {
         jobId,

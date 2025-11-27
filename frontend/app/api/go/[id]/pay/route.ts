@@ -10,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }   // ✅ FIX Next.js 16
+   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const jobId = Number(context.params.id);
