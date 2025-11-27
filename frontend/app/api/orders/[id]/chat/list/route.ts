@@ -1,25 +1,47 @@
-// app/api/orders/[orderId]/chat/list/route.ts
+// app/api/orders/[id]/chat/list/route.ts
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { orderId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ messages: [] });
+  try {
+    // Récupération param id
+    const { id } = await context.params;
+    const orderId = Number(id);
 
-  const orderId = Number(params.orderId);
+    // Auth
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ messages: [] });
+    }
 
-  const messages = await prisma.marketplaceOrderMessage.findMany({
-    where: { orderId },
-    orderBy: { createdAt: "asc" },
-    include: {
-      sender: true,
-    },
-  });
+    if (Number.isNaN(orderId)) {
+      return NextResponse.json(
+        { error: "ID commande invalide." },
+        { status: 400 }
+      );
+    }
 
-  return NextResponse.json({ messages });
+    // Récupération messages
+    const messages = await prisma.marketplaceOrderMessage.findMany({
+      where: { orderId },
+      orderBy: { createdAt: "asc" },
+      include: {
+        sender: true,
+      },
+    });
+
+    return NextResponse.json({ messages });
+
+  } catch (error) {
+    console.error("CHAT LIST ERROR:", error);
+    return NextResponse.json(
+      { error: "Erreur serveur." },
+      { status: 500 }
+    );
+  }
 }
