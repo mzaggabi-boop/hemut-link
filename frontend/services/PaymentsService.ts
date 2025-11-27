@@ -7,9 +7,6 @@ export interface StripeConnectResponse {
   accountId?: string;
 }
 
-/**
- * Crée un compte Stripe Connect et renvoie l'URL d'onboarding.
- */
 export async function createStripeConnectAccount(): Promise<StripeConnectResponse> {
   const res = await fetch(`${API_URL}/payments/create-account`, {
     method: "POST",
@@ -28,9 +25,6 @@ export async function createStripeConnectAccount(): Promise<StripeConnectRespons
   return data;
 }
 
-/**
- * Récupère un lien vers le dashboard Stripe Connect.
- */
 export async function getStripeDashboardLink(): Promise<string> {
   const res = await fetch(`${API_URL}/payments/dashboard-link`, {
     credentials: "include",
