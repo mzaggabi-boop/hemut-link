@@ -12,41 +12,13 @@ export const metadata: Metadata = {
   },
   description:
     "Hemut-link : Marketplace, missions express, conciergerie, outils et services dédiés aux professionnels du bâtiment.",
-  keywords: [
-    "bâtiment",
-    "marketplace",
-    "artisans",
-    "matériel",
-    "missions express",
-    "conciergerie",
-    "professionnels",
-    "chantier",
-  ],
-  robots: "index, follow",
-
-  openGraph: {
-    type: "website",
-    locale: "fr_FR",
-    title: "Hemut-link — Plateforme professionnelle du bâtiment",
-    description:
-      "Hemut-link connecte les artisans, fournisseurs et professionnels du bâtiment autour d'une marketplace moderne et de services spécialisés.",
-    url: "https://www.hemut-link.com",
-    siteName: "Hemut-link",
-  },
-
-  twitter: {
-    card: "summary_large_image",
-    title: "Hemut-link — Plateforme du bâtiment",
-    description:
-      "Marketplace, missions express, conciergerie et services professionnels.",
-  },
-
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fr" className="scroll-smooth">
       <body className="bg-white text-gray-900 antialiased">
