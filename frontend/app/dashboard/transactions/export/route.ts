@@ -1,9 +1,12 @@
 // app/api/transactions/export/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
-export async function GET() {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{}> }
+) {
   const supabase = supabaseServer();
   const {
     data: { user },

@@ -8,7 +8,7 @@ export async function POST(
   context: { params: { id: string } }
 ) {
   try {
-    const jobId = parseInt(context.params.id);
+    context: { params: Promise<{ id: string }> }
 
     if (isNaN(jobId)) {
       return NextResponse.json(
