@@ -1,4 +1,3 @@
-// app/api/m10/litige/[id]/reply/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
