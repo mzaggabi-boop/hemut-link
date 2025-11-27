@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params; // ← obligatoire pour Vercel !!!
+    const { id } = await context.params;
     const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
@@ -17,48 +17,53 @@ export async function POST(
       );
     }
 
+    const supabase = supabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Non authentifié." },
+        { status: 401 }
+      );
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { supabaseId: user.id },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "Utilisateur introuvable." },
+        { status: 404 }
+      );
+    }
+
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
     });
 
     if (!job) {
       return NextResponse.json(
-        { error: "Job non trouvé." },
+        { error: "Mission introuvable." },
         { status: 404 }
       );
     }
 
-    if (job.status === "CANCELLED") {
-      return NextResponse.json(
-        { error: "Ce job est déjà annulé." },
-        { status: 400 }
-      );
-    }
-
-    const updatedJob = await prisma.goJob.update({
+    // ANNULATION (on retire cancelledAt car il n'existe pas)
+    await prisma.goJob.update({
       where: { id: jobId },
       data: {
         status: "CANCELLED",
-        cancelledAt: new Date(),
       },
     });
 
-    return NextResponse.json({
-      ok: true,
-      job: updatedJob,
-    });
-  } catch (error) {
-    console.error("Erreur CANCEL:", error);
+    return NextResponse.json(
+      { success: true, message: "Mission annulée." },
+      { status: 200 }
+    );
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return NextResponse.json(
-          { error: "Job non trouvé." },
-          { status: 404 }
-        );
-      }
-    }
-
+  } catch (err) {
+    console.error("GO CANCEL ERROR:", err);
     return NextResponse.json(
       { error: "Erreur serveur." },
       { status: 500 }
