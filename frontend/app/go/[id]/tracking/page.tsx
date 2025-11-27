@@ -9,7 +9,7 @@ import { getRouteInfo } from "@/services/MapboxRouteService";
 export default function TrackingPage() {
   const { id } = useParams();
 
-  const [route, setRoute] = useState(null);
+  const [route, setRoute] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -29,3 +29,4 @@ export default function TrackingPage() {
     </div>
   );
 }
+
