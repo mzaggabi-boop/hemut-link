@@ -1,23 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
-  req: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = Number(context.params.id);
-    if (Number.isNaN(jobId))
-      return NextResponse.json({ error: "ID invalide" }, { status: 400 });
+    const { id } = await context.params;
+    const jobId = Number(id);
 
-    const { rating, comment } = await req.json();
+    if (Number.isNaN(jobId)) {
+      return NextResponse.json(
+        { error: "ID invalide" },
+        { status: 400 }
+      );
+    }
 
-    if (!rating || rating < 1 || rating > 5)
+    const { rating, comment } = await request.json();
+
+    if (!rating || rating < 1 || rating > 5) {
       return NextResponse.json(
         { error: "Note invalide (1 à 5)" },
         { status: 400 }
       );
+    }
 
     // AUTH
     const supabase = supabaseServer();
@@ -25,51 +32,63 @@ export async function POST(
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user)
-      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      );
+    }
 
     const dbUser = await prisma.user.findUnique({
       where: { supabaseId: user.id },
     });
 
-    if (!dbUser)
+    if (!dbUser) {
       return NextResponse.json(
         { error: "Utilisateur introuvable" },
         { status: 404 }
       );
+    }
 
     // Vérifier la mission
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
     });
 
-    if (!job)
-      return NextResponse.json({ error: "Mission introuvable" }, { status: 404 });
+    if (!job) {
+      return NextResponse.json(
+        { error: "Mission introuvable" },
+        { status: 404 }
+      );
+    }
 
-    if (job.clientId !== dbUser.id)
+    if (job.clientId !== dbUser.id) {
       return NextResponse.json(
         { error: "Vous ne pouvez évaluer que vos propres missions" },
         { status: 403 }
       );
+    }
 
-    if (!job.artisanId)
+    if (!job.artisanId) {
       return NextResponse.json(
         { error: "Aucun artisan assigné à cette mission" },
         { status: 400 }
       );
+    }
 
-    // Déjà évalué ?
+    // Vérifier si déjà évalué
     const existing = await prisma.review.findFirst({
       where: { userId: dbUser.id, artisanId: job.artisanId, jobId },
     });
 
-    if (existing)
+    if (existing) {
       return NextResponse.json(
         { error: "Vous avez déjà laissé un avis pour cette mission" },
         { status: 400 }
       );
+    }
 
-    // ✔ Création de l’avis
+    // Création de l'avis
     await prisma.review.create({
       data: {
         rating,
@@ -80,7 +99,7 @@ export async function POST(
       },
     });
 
-    // 🟢 Recalcul de la moyenne de l’artisan
+    // Mise à jour moyenne artisan
     const stats = await prisma.review.aggregate({
       where: { artisanId: job.artisanId },
       _avg: { rating: true },
@@ -91,7 +110,7 @@ export async function POST(
       data: { rating: stats._avg.rating || 0 },
     });
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("REVIEW ERROR:", err);
     return NextResponse.json(
