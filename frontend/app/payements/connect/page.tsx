@@ -1,9 +1,8 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Button from "../../components/Button";
-import { createStripeConnectAccount } from "../../services/PaymentsService";
+import Button from "../../../components/Button";
+import { createStripeConnectAccount } from "../../../services/PaymentsService";
 
 export default function StripeConnectPage() {
   const router = useRouter();
