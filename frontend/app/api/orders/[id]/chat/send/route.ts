@@ -1,40 +1,63 @@
-// app/api/orders/[orderId]/chat/send/route.ts
+// app/api/orders/[id]/chat/send/route.ts
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { notifyMarketplaceChatMessage } from "@/lib/notifications";
 
 export async function POST(
-  req: Request,
-  { params }: { params: { orderId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Récupération du paramètre
+    const { id } = await context.params;
+    const orderId = Number(id);
+
+    if (Number.isNaN(orderId)) {
+      return NextResponse.json(
+        { error: "ID invalide" },
+        { status: 400 }
+      );
+    }
+
+    // Auth utilisateur
     const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      );
+    }
 
-    const orderId = Number(params.orderId);
-    if (Number.isNaN(orderId))
-      return NextResponse.json({ error: "ID invalide" }, { status: 400 });
-
-    const body = await req.json();
+    // Lecture du message
+    const body = await request.json();
     const { content } = body;
 
-    if (!content || !content.trim())
-      return NextResponse.json({ error: "Message vide" }, { status: 400 });
+    if (!content || !content.trim()) {
+      return NextResponse.json(
+        { error: "Message vide" },
+        { status: 400 }
+      );
+    }
 
+    // Vérification commande
     const order = await prisma.marketplaceOrder.findUnique({
       where: { id: orderId },
     });
 
-    if (!order)
-      return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
+    if (!order) {
+      return NextResponse.json(
+        { error: "Commande introuvable" },
+        { status: 404 }
+      );
+    }
 
-    // déterminer le destinataire
+    // Déterminer le destinataire du message
     const toUserId =
       user.id === order.buyerId ? order.sellerId : order.buyerId;
 
-    // enregistrement du message
+    // Enregistrer le message
     const msg = await prisma.marketplaceOrderMessage.create({
       data: {
         orderId,
@@ -43,7 +66,7 @@ export async function POST(
       },
     });
 
-    // notification du destinataire
+    // Notification
     await notifyMarketplaceChatMessage({
       orderId,
       fromUserId: user.id,
@@ -51,8 +74,12 @@ export async function POST(
     });
 
     return NextResponse.json({ ok: true, message: msg });
+
   } catch (e) {
-    console.error("Error:", e);
-    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+    console.error("CHAT SEND ERROR:", e);
+    return NextResponse.json(
+      { error: "Erreur interne" },
+      { status: 500 }
+    );
   }
 }
