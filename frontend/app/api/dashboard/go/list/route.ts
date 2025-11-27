@@ -1,4 +1,4 @@
-// app/api/dashboard/go/list/route.ts
+// frontend/app/api/dashboard/go/list/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
@@ -9,19 +9,27 @@ export async function GET() {
     const supabase = supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user)
-      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    if (!user) {
+      return NextResponse.json(
+        { error: "Non authentifié." },
+        { status: 401 }
+      );
+    }
 
     const dbUser = await prisma.user.findUnique({
       where: { supabaseId: user.id },
     });
 
-    if (!dbUser)
-      return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "Utilisateur introuvable." },
+        { status: 404 }
+      );
+    }
 
     const artisanId = dbUser.id;
 
-    // RÉCUPÉRATION DES MISSIONS
+    // RÉCUPÉRATION MISSIONS
     const jobs = await prisma.goJob.findMany({
       where: { artisanId },
       include: {
@@ -32,31 +40,36 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // CLASSEMENT PAR STATUT
+    // CLASSEMENT
     const waiting = jobs.filter(j => j.status === "ACCEPTED");
     const inProgress = jobs.filter(j => j.status === "IN_PROGRESS");
     const completed = jobs.filter(j => j.status === "COMPLETED");
 
-    // STATISTIQUES
-    const totalEarned = jobs
-      .filter(j => j.status === "COMPLETED" && j.payments.length > 0)
-      .reduce((sum, j) => sum + j.payments[0].amount - j.payments[0].commission, 0);
+    // STATISTIQUES GLOBALES
+    const totalEarned = completed.reduce((sum, job) => {
+      const p = job.payments[0];
+      if (!p) return sum;
+      return sum + (p.amount - p.commission);
+    }, 0);
 
     const completedCount = completed.length;
     const inProgressCount = inProgress.length;
 
-    // CALCUL MENSUEL POUR GRAPH
+    // STATISTIQUES MENSUELLES
     const revenueByMonth: Record<string, number> = {};
     const missionsByMonth: Record<string, number> = {};
 
     completed.forEach((job) => {
       const date = new Date(job.createdAt);
-      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      if (isNaN(date.getTime())) return;
+
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
       missionsByMonth[key] = (missionsByMonth[key] || 0) + 1;
 
-      if (job.payments.length > 0) {
-        const net = job.payments[0].amount - job.payments[0].commission;
+      const p = job.payments[0];
+      if (p) {
+        const net = p.amount - p.commission;
         revenueByMonth[key] = (revenueByMonth[key] || 0) + net;
       }
     });
@@ -69,11 +82,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({
-      jobs: {
-        waiting,
-        inProgress,
-        completed,
-      },
+      jobs: { waiting, inProgress, completed },
       stats: {
         totalEarned,
         completedCount,
@@ -89,4 +98,3 @@ export async function GET() {
     );
   }
 }
-// API DASHBOARD GO - � REMPLACER
