@@ -1,5 +1,4 @@
-// app/api/go/[id]/pay/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import Stripe from "stripe";
 import { supabaseServer } from "@/lib/supabase-server";
@@ -9,11 +8,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(
-  req: Request,
-  context: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = parseInt(context.params.id);
+    const { id } = await context.params;
+    const jobId = Number(id);
 
     if (isNaN(jobId)) {
       return NextResponse.json({ error: "ID invalide." }, { status: 400 });
@@ -64,12 +64,12 @@ export async function POST(
     // Vérifier qu'un artisan a accepté la mission
     if (!job.artisanId) {
       return NextResponse.json(
-        { error: "La mission doit être acceptée par un artisan avant paiement." },
+        { error: "La mission doit être acceptée avant paiement." },
         { status: 400 }
       );
     }
 
-    // Vérifier que le prix existe
+    // Vérifier le prix
     if (!job.price) {
       return NextResponse.json(
         { error: "Aucun montant défini pour cette mission." },
@@ -77,10 +77,9 @@ export async function POST(
       );
     }
 
-    // Montant final
-    const amount = Math.round(job.price * 100); // centimes
+    const amount = Math.round(job.price * 100);
 
-    // CRÉATION PAYMENT INTENT
+    // CREATION PAYMENT INTENT
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "eur",
@@ -91,14 +90,14 @@ export async function POST(
       },
     });
 
-    // Sauvegarde en base
+    // Enregistrer en base
     await prisma.payment.create({
       data: {
         jobId: job.id,
-        senderId: job.clientId, // client
-        receiverId: job.artisanId, // artisan
+        senderId: job.clientId,
+        receiverId: job.artisanId,
         amount: job.price,
-        commission: job.price * 0.10, // ex : 10%
+        commission: job.price * 0.1,
         stripePaymentIntentId: paymentIntent.id,
         status: "PENDING",
       },
@@ -108,7 +107,7 @@ export async function POST(
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("GO PAYMENT ERROR:", err);
     return NextResponse.json(
       { error: "Erreur lors de la création du paiement." },
