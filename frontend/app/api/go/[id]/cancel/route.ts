@@ -1,11 +1,9 @@
-// frontend/app/api/go/[id]/cancel/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }   // ✅ Fix typage Next16
+  context: { params: { id: string } }
 ) {
   try {
     const jobId = Number(context.params.id);
@@ -19,7 +17,9 @@ export async function POST(
 
     await prisma.goJob.update({
       where: { id: jobId },
-      data: { status: "CANCELLED" },
+      data: {
+        status: "CANCELLED"
+      },
     });
 
     return NextResponse.json({ ok: true });
