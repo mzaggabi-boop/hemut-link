@@ -5,9 +5,8 @@ import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 import { notifyMarketplaceOrderCreated } from "@/lib/notifications";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
-});
+// IMPORTANT : ne plus mettre apiVersion → Stripe gère automatiquement !
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   try {
@@ -33,7 +32,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Création commande Marketplace (statut pending)
+    // Création commande (pending)
     const order = await prisma.marketplaceOrder.create({
       data: {
         buyerId,
@@ -44,7 +43,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // Création session Stripe
+    // Création session Stripe Checkout
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -70,7 +69,7 @@ export async function POST(req: Request) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/marketplace/${product.id}?cancel=1`,
     });
 
-    // Notifier vendeur + acheteur (commande créée)
+    // Notification vendeur + acheteur
     await notifyMarketplaceOrderCreated({
       orderId: order.id,
       buyerId,
@@ -78,7 +77,6 @@ export async function POST(req: Request) {
       productTitle: product.title,
     });
 
-    // Retourner l’URL Stripe Checkout au frontend
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Erreur création session checkout:", error);
