@@ -1,6 +1,4 @@
-// app/api/go/[id]/step/route.ts
-
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
   notifyGoClientStep,
@@ -8,13 +6,13 @@ import {
 } from "@/lib/notifications";
 
 export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }  // ✅ "id" pas "jobId"
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = await params;  // ✅ "id" pas "jobId"
     const jobId = Number(id);
-
+    
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
         { error: "ID mission non valide." },
@@ -22,7 +20,7 @@ export async function POST(
       );
     }
 
-    const body = await request.json();
+    const body = await req.json();
     const { step } = body;
 
     if (!step) {
@@ -32,7 +30,6 @@ export async function POST(
       );
     }
 
-    // Vérifier que la mission existe
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
       include: { client: true, artisan: true },
@@ -45,13 +42,11 @@ export async function POST(
       );
     }
 
-    // Mise à jour de l'étape actuelle
     await prisma.goJob.update({
       where: { id: jobId },
       data: { currentStep: step },
     });
 
-    // Ajout à l'historique
     await prisma.goJobProgress.create({
       data: {
         jobId,
@@ -60,7 +55,6 @@ export async function POST(
       },
     });
 
-    // NOTIFICATION CLIENT
     await notifyGoClientStep({
       clientId: job.clientId,
       jobId,
