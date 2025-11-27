@@ -1,27 +1,29 @@
 // app/api/m10/litige/[orderId]/reply/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(
-  req: Request,
-  { params }: { params: { orderId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const { orderId } = await context.params;
+    const numericOrderId = Number(orderId);
+
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
-    const orderId = Number(params.orderId);
-    if (Number.isNaN(orderId)) {
+    if (Number.isNaN(numericOrderId)) {
       return NextResponse.json(
         { error: "ID commande invalide." },
         { status: 400 }
       );
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { message } = body;
 
     if (!message?.trim()) {
@@ -32,7 +34,7 @@ export async function POST(
     }
 
     const order = await prisma.marketplaceOrder.findUnique({
-      where: { id: orderId },
+      where: { id: numericOrderId },
     });
 
     if (!order || order.status !== "dispute") {
@@ -44,7 +46,7 @@ export async function POST(
 
     await prisma.disputeMessage.create({
       data: {
-        orderId,
+        orderId: numericOrderId,
         senderId: user.id,
         content: message.trim(),
       },
