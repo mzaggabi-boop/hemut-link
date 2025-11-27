@@ -6,10 +6,11 @@ import { notifyGoClientCompleted } from "@/lib/notifications";
 
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }   // ✅ FIX Next.js 16
+  context: { params: Promise<{ id: string }> }   // ✅ FIX: Promise ajoutée
 ) {
   try {
-    const jobId = Number(context.params.id);
+    const { id } = await context.params;  // ✅ FIX: await ajouté
+    const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
@@ -63,4 +64,3 @@ export async function POST(
     );
   }
 }
-
