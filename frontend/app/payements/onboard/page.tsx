@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import Button from "../../components/Button";
+import Button from "../../../components/Button";
 
 export default function StripeOnboardCallbackPage() {
   const router = useRouter();
