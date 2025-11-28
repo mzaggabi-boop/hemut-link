@@ -5,67 +5,91 @@ import stream from "stream";
 
 export async function GET(
   req: Request,
-  context: { params: Promise<{ id: string }> }  // ✅ Promise ajoutée
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;  // ✅ await ajouté
-  const orderId = Number(id);
+  try {
+    const { id } = await context.params;
+    const orderId = Number(id);
 
-  const order = await prisma.marketplaceOrder.findUnique({
-    where: { id: orderId },
-    include: {
-      buyer: true,
-      seller: true,
-      product: true,
-    },
-  });
+    if (isNaN(orderId)) {
+      return NextResponse.json({ error: "ID invalide." }, { status: 400 });
+    }
 
-  if (!order) {
+    const order = await prisma.marketplaceOrder.findUnique({
+      where: { id: orderId },
+      include: {
+        buyer: true,
+        seller: true,
+        product: true,
+      },
+    });
+
+    if (!order) {
+      return NextResponse.json(
+        { error: "Commande introuvable." },
+        { status: 404 }
+      );
+    }
+
+    // 🔥 PDF → Web-compatible Uint8Array
+    const pass = new stream.PassThrough();
+    const doc = new PDFDocument({ margin: 40 });
+
+    const chunks: Uint8Array[] = [];
+
+    pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
+    pass.on("error", (err) => {
+      console.error("PDF STREAM ERROR:", err);
+    });
+
+    doc.pipe(pass);
+
+    // ----------- PDF CONTENU -----------
+    doc.fontSize(22).text("Facture Marketplace", { align: "center" });
+    doc.moveDown();
+
+    doc.fontSize(12).text(`Facture pour commande #${order.id}`);
+    doc.text(`Date : ${order.createdAt.toLocaleString("fr-FR")}`);
+    doc.moveDown();
+
+    doc.text(`Produit : ${order.product?.title}`);
+    doc.text(
+      `Montant : ${order.total.toLocaleString("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+      })}`
+    );
+    doc.moveDown();
+
+    doc.text("Client :");
+    doc.text(`${order.buyer.firstname} ${order.buyer.lastname}`);
+    doc.text(order.buyer.email);
+    doc.moveDown();
+
+    doc.text("Vendeur :");
+    doc.text(`${order.seller.firstname} ${order.seller.lastname}`);
+    doc.text(order.seller.email);
+    // -----------------------------------
+
+    doc.end();
+
+    // ⬇️ Transformation compatible Next.js 16 / Vercel
+    const pdfBuffer: Uint8Array = await new Promise((resolve) => {
+      pass.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+
+    return new NextResponse(pdfBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename=facture-${orderId}.pdf`,
+      },
+    });
+  } catch (err) {
+    console.error("INVOICE ERROR:", err);
     return NextResponse.json(
-      { error: "Commande introuvable." },
-      { status: 404 }
+      { error: "Erreur serveur." },
+      { status: 500 }
     );
   }
-
-  const pdfStream = new stream.PassThrough();
-  const doc = new PDFDocument({ margin: 40 });
-
-  doc.pipe(pdfStream);
-
-  doc.fontSize(22).text("Facture Marketplace", { align: "center" });
-  doc.moveDown();
-
-  doc.fontSize(12).text(`Facture pour commande #${order.id}`);
-  doc.text(`Date : ${order.createdAt.toLocaleString("fr-FR")}`);
-
-  doc.moveDown();
-
-  doc.text(`Produit : ${order.product?.title}`);
-  doc.text(
-    `Montant : ${order.total.toLocaleString("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-    })}`
-  );
-
-  doc.moveDown();
-
-  doc.text("Client :");
-  doc.text(`${order.buyer.firstname} ${order.buyer.lastname}`);
-  doc.text(order.buyer.email);
-
-  doc.moveDown();
-
-  doc.text("Vendeur :");
-  doc.text(`${order.seller.firstname} ${order.seller.lastname}`);
-  doc.text(order.seller.email);
-
-  doc.end();
-
-  return new NextResponse(pdfStream, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=facture-${orderId}.pdf`,
-    },
-  });
 }
