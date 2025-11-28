@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const search = q.toLowerCase();
 
   // Recherche PRODUITS
-  const products = await prisma.product.findMany({
+  const products = await prisma.marketplaceProduct.findMany({
     where: {
       title: { contains: search, mode: "insensitive" },
     },
@@ -70,12 +70,14 @@ export async function GET(req: Request) {
       title: p.title,
       subtitle: "Produit Marketplace",
     })),
+
     ...orders.map((o) => ({
       type: "ORDER",
       id: o.id,
       title: o.product?.title ?? "Commande",
       subtitle: `Client: ${o.buyer?.firstname ?? ""} ${o.buyer?.lastname ?? ""}`,
     })),
+
     ...jobs.map((j) => ({
       type: "GO",
       id: j.id,
@@ -86,4 +88,3 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ results });
 }
-
