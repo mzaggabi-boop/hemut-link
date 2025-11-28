@@ -1,14 +1,17 @@
 // frontend/app/api/go/[id]/review/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
   request: NextRequest,
-context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = Number(context.params.id);
+    // ✅ OBLIGATOIRE SUR NEXT 16 : await params
+    const { id } = await context.params;
+    const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
@@ -26,11 +29,9 @@ context: { params: Promise<{ id: string }> }
       );
     }
 
-    // AUTH
+    // 🔐 AUTH SUPABASE
     const supabase = supabaseServer();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json(
@@ -50,7 +51,7 @@ context: { params: Promise<{ id: string }> }
       );
     }
 
-    // Vérifier la mission
+    // 🔍 Vérifier la mission
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
     });
@@ -76,7 +77,7 @@ context: { params: Promise<{ id: string }> }
       );
     }
 
-    // Déjà évalué ?
+    // 🛑 Vérifier si déjà évalué
     const existing = await prisma.review.findFirst({
       where: { userId: dbUser.id, artisanId: job.artisanId, jobId },
     });
@@ -88,7 +89,7 @@ context: { params: Promise<{ id: string }> }
       );
     }
 
-    // Création de l'avis
+    // 📝 Créer l’avis
     await prisma.review.create({
       data: {
         rating,
@@ -99,7 +100,7 @@ context: { params: Promise<{ id: string }> }
       },
     });
 
-    // Mise à jour moyenne artisan
+    // ⭐ Mise à jour moyenne artisan
     const stats = await prisma.review.aggregate({
       where: { artisanId: job.artisanId },
       _avg: { rating: true },
@@ -111,6 +112,7 @@ context: { params: Promise<{ id: string }> }
     });
 
     return NextResponse.json({ success: true });
+
   } catch (err) {
     console.error("REVIEW ERROR:", err);
     return NextResponse.json(
