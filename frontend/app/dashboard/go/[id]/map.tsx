@@ -14,8 +14,10 @@ const icon = L.icon({
 export default function Map({ lat, lon }: { lat: number; lon: number }) {
   return (
     <>
-      {/* ⛔ Fix TypeScript: MapContainer types broken in react-leaflet 4.x */}
-      {/* @ts-ignore */}
+      {/* Fix Turbopack typing issues */}
+      {/* React-leaflet 4.x has incorrect TS types for MapContainer */}
+
+      {/* @ts-expect-error: react-leaflet MapContainer types broken */}
       <MapContainer
         center={[lat, lon]}
         zoom={15}
