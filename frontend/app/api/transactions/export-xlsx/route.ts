@@ -94,7 +94,8 @@ export async function GET() {
   // ================================
   // EXPORT BUFFER
   // ================================
-  const buffer = await workbook.xlsx.writeBuffer();
+  const bufferData = await workbook.xlsx.writeBuffer();
+  const buffer = bufferData instanceof Uint8Array ? bufferData : new Uint8Array(bufferData as ArrayBuffer);
 
   return new NextResponse(buffer, {
     status: 200,

@@ -39,10 +39,12 @@ export async function GET() {
   });
 
   // Init PDF stream
-  const pdfStream = new stream.PassThrough();
+  const pass = new stream.PassThrough();
+  const chunks: Uint8Array[] = [];
+  pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
   const doc = new PDFDocument({ margin: 40 });
 
-  doc.pipe(pdfStream);
+  doc.pipe(pass);
 
   // Header
   doc.fontSize(20).text("Hemut-link — Rapport des transactions", {
@@ -87,7 +89,11 @@ export async function GET() {
 
   doc.end();
 
-  return new NextResponse(pdfStream, {
+  const pdfBuffer: Uint8Array = await new Promise((resolve) => {
+    pass.on("end", () => resolve(Buffer.concat(chunks)));
+  });
+
+  return new NextResponse(pdfBuffer, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
@@ -136,10 +142,12 @@ export async function GET() {
   });
 
   // Init PDF stream
-  const pdfStream = new stream.PassThrough();
+  const pass = new stream.PassThrough();
+  const chunks: Uint8Array[] = [];
+  pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
   const doc = new PDFDocument({ margin: 40 });
 
-  doc.pipe(pdfStream);
+  doc.pipe(pass);
 
   // Header
   doc.fontSize(20).text("Hemut-link — Rapport des transactions", {
@@ -184,7 +192,11 @@ export async function GET() {
 
   doc.end();
 
-  return new NextResponse(pdfStream, {
+  const pdfBuffer: Uint8Array = await new Promise((resolve) => {
+    pass.on("end", () => resolve(Buffer.concat(chunks)));
+  });
+
+  return new NextResponse(pdfBuffer, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

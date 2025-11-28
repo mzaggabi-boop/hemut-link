@@ -67,10 +67,12 @@ export async function GET(
       });
     }
 
-    const pdfStream = new stream.PassThrough();
+    const pass = new stream.PassThrough();
+  const chunks: Uint8Array[] = [];
+  pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
     const doc = new PDFDocument({ size: "A4", margin: 40 });
 
-    doc.pipe(pdfStream);
+    doc.pipe(pass);
 
     // HEADER
     doc.fontSize(20).text("Hemut-link", { align: "left" });
