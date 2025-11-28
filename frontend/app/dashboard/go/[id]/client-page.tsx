@@ -2,7 +2,8 @@
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Map from "./map";
-import ValidateButton from "./validate-button";
+import ValidateButton from "./complete-button";  // ✔ CORRIGÉ
+
 
 function formatDate(date: Date) {
   return date.toLocaleString("fr-FR", {
