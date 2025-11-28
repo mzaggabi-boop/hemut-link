@@ -19,7 +19,8 @@ export default async function ProductDetailPage({
   const id = Number(params.id);
   if (Number.isNaN(id)) return notFound();
 
-  const product = await prisma.product.findUnique({
+  // FIX : prisma.product ➜ prisma.marketplaceProduct
+  const product = await prisma.marketplaceProduct.findUnique({
     where: { id },
     include: {
       seller: true,
@@ -119,9 +120,7 @@ export default async function ProductDetailPage({
 
           {/* INFO VENDEUR */}
           <div className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900">
-              Vendeur
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-900">Vendeur</h3>
 
             {product.seller ? (
               <div className="space-y-1 text-xs text-gray-700">
