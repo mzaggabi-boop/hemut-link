@@ -18,7 +18,7 @@ export default async function MarketplacePage({
   const category = (searchParams.category ?? "").trim();
 
   /**
-   * BUILD DU WHERE CLAUSE
+   * WHERE CLAUSE
    */
   const whereClause: any = { AND: [] };
 
@@ -34,16 +34,16 @@ export default async function MarketplacePage({
   if (category.length > 0) {
     whereClause.AND.push({
       category: {
-        is: { name: category }
-      }
+        is: { name: category },
+      },
     });
   }
 
-  if (whereClause.AND.length === 0) {
-    delete whereClause.AND;
-  }
+  if (whereClause.AND.length === 0) delete whereClause.AND;
 
-  // FETCH DES PRODUITS
+  /**
+   * PRODUITS
+   */
   const products = await prisma.marketplaceProduct.findMany({
     where: whereClause,
     orderBy: { createdAt: "desc" },
@@ -53,10 +53,12 @@ export default async function MarketplacePage({
     },
   });
 
-  // FETCH DES CATÉGORIES UNIQUES
+  /**
+   * CATÉGORIES DISPONIBLES
+   */
   const categories = await prisma.marketplaceProduct.findMany({
     select: { category: true },
-    where: { categoryId: { NOT: null } },
+    where: { categoryId: { not: null } }, // <-- FIX DÉFINITIF ✔
     distinct: ["categoryId"],
     orderBy: { categoryId: "asc" },
   });
@@ -82,7 +84,7 @@ export default async function MarketplacePage({
         </Link>
       </header>
 
-      {/* BARRE DE RECHERCHE + FILTRES */}
+      {/* RECHERCHE + FILTRES */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
         <form className="flex flex-col gap-3 md:flex-row md:items-center">
           <input
@@ -117,11 +119,11 @@ export default async function MarketplacePage({
         </form>
       </section>
 
-      {/* LISTE DES PRODUITS */}
+      {/* LISTE */}
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products.length === 0 ? (
           <p className="col-span-full text-xs text-gray-500">
-            Aucun produit trouvé avec ces critères.
+            Aucun produit trouvé.
           </p>
         ) : (
           products.map((product) => (
