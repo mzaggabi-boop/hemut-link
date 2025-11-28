@@ -53,9 +53,12 @@ export default async function StatsPage() {
     }),
   ]);
 
-  const products = await prisma.product.findMany({
+  // FIX : remplacer prisma.product → prisma.marketplaceProduct
+  const products = await prisma.marketplaceProduct.findMany({
     where: {
-      id: { in: bestProducts.map((p) => p.productId).filter(Boolean) },
+      id: {
+        in: bestProducts.map((p) => p.productId).filter(Boolean),
+      },
     },
   });
 
