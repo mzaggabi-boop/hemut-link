@@ -69,17 +69,21 @@ export async function GET(
 
     doc.end();
 
-    const pdfBuffer: Uint8Array = await new Promise((resolve) => {
-      pass.on("end", () => resolve(Buffer.concat(chunks)));
-    });
+const pdfBuffer: Buffer = await new Promise((resolve) => {
+  pass.on("end", () => resolve(Buffer.concat(chunks)));
+});
 
-    return new NextResponse(pdfBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename=facture-${orderId}.pdf`,
-      },
-    });
+// Convert Buffer → Blob for Next.js 16 compatibility
+const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+
+return new NextResponse(blob, {
+  status: 200,
+  headers: {
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename=facture-${order.id}.pdf`,
+  },
+});
+
   } catch (err) {
     console.error("INVOICE ERROR:", err);
     return NextResponse.json(
@@ -88,3 +92,4 @@ export async function GET(
     );
   }
 }
+

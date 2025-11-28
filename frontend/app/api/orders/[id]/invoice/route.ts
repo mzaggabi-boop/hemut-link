@@ -67,11 +67,12 @@ export async function GET(
       });
     }
 
+    // STREAM FIX COMPATIBLE NEXT 16
     const pass = new stream.PassThrough();
-  const chunks: Uint8Array[] = [];
-  pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
-    const doc = new PDFDocument({ size: "A4", margin: 40 });
+    const chunks: Uint8Array[] = [];
+    pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
 
+    const doc = new PDFDocument({ size: "A4", margin: 40 });
     doc.pipe(pass);
 
     // HEADER
@@ -166,13 +167,22 @@ export async function GET(
 
     doc.end();
 
-    return new NextResponse(pdfStream, {
+    // BUFFER COMPATIBLE NEXT 16
+    const pdfBuffer: Buffer = await new Promise((resolve) => {
+      pass.on("end", () => resolve(Buffer.concat(chunks)));
+    });
+
+    // Convert to Blob → FIX for Next 16 compatibility
+    const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+
+    return new NextResponse(blob, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename=facture-${order.id}.pdf`,
       },
     });
+
   } catch (err) {
     console.error("INVOICE ERROR:", err);
     return new NextResponse("Erreur serveur", { status: 500 });
