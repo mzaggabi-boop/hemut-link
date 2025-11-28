@@ -19,15 +19,23 @@ export default async function ProductDetailPage({
   const id = Number(params.id);
   if (Number.isNaN(id)) return notFound();
 
-  // FIX : prisma.product ➜ prisma.marketplaceProduct
   const product = await prisma.marketplaceProduct.findUnique({
     where: { id },
     include: {
       seller: true,
+      photos: true,
+      images: true,
     },
   });
 
   if (!product) return notFound();
+
+  // 📌 Image principale logique
+  const mainImage =
+    product.coverImageUrl ||
+    product.images?.[0]?.originalUrl ||
+    product.photos?.[0]?.url ||
+    null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 space-y-6">
@@ -67,16 +75,16 @@ export default async function ProductDetailPage({
         <section className="space-y-4">
           {/* IMAGE */}
           <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-            {product.image ? (
+            {mainImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={product.image}
+                src={mainImage}
                 alt={product.title}
                 className="w-full h-80 object-cover"
               />
             ) : (
               <div className="flex h-80 items-center justify-center text-gray-400">
-                Pas d'image
+                Pas d'image disponible
               </div>
             )}
           </div>
@@ -108,7 +116,7 @@ export default async function ProductDetailPage({
               <p className="text-xs text-gray-600">
                 Catégorie :{" "}
                 <span className="font-medium text-gray-900">
-                  {product.category}
+                  {product.category.name}
                 </span>
               </p>
             )}
