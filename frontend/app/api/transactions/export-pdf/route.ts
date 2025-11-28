@@ -1,4 +1,4 @@
-// CODE � COLLER
+// CODE À COLLER
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
@@ -63,14 +63,14 @@ export async function GET() {
     const net = p.amount - p.commission;
 
     rows.push([
-      p.id,
+      String(p.id),
       new Date(p.createdAt).toLocaleString("fr-FR"),
       type,
       label,
       p.sender?.email || "",
-      brut,
-      p.commission,
-      net,
+      String(brut),
+      String(p.commission),
+      String(net),
       p.status,
     ]);
   }
