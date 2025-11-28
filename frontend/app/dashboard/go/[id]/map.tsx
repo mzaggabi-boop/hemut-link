@@ -1,8 +1,8 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const icon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -12,24 +12,32 @@ const icon = L.icon({
 });
 
 export default function Map({ lat, lon }: { lat: number; lon: number }) {
-  return (
-    <>
-      {/* react-leaflet 4.x : MapContainer types are broken under Next 16 */}
-      {/* Turbopack requires @ts-ignore OUTSIDE JSX */}
+  const mapRef = useRef<HTMLDivElement | null>(null);
 
-      // @ts-ignore
-      <MapContainer
-        center={[lat, lon]}
-        zoom={15}
-        scrollWheelZoom={false}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={[lat, lon]} icon={icon} />
-      </MapContainer>
-    </>
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Création de la map
+    const map = L.map(mapRef.current).setView([lat, lon], 15);
+
+    // Tiles
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(map);
+
+    // Marqueur
+    L.marker([lat, lon], { icon }).addTo(map);
+
+    // Cleanup
+    return () => {
+      map.remove();
+    };
+  }, [lat, lon]);
+
+  return (
+    <div
+      ref={mapRef}
+      style={{ width: "100%", height: "100%", borderRadius: "8px" }}
+    />
   );
 }
