@@ -1,6 +1,6 @@
 // =============================
 // Hemut-link - Prisma Schema
-// Compatible Prisma 5.14
+// Compatible Prisma 5.x / Next.js 16
 // =============================
 
 generator client {
@@ -252,7 +252,36 @@ model GoJobProgress {
 }
 
 // ---------------------------------------------------
-// ORDERS
+// ORDERS (Marketplace)
+// ---------------------------------------------------
+
+model MarketplaceOrder {
+  id        Int    @id @default(autoincrement())
+  buyerId   Int
+  sellerId  Int
+  productId Int
+  total     Int
+  currency  String @default("eur")
+  status    String @default("pending")
+
+  trackingStatus String?   // ✅ AJOUTÉ pour corriger l’erreur Vercel
+
+  stripeCheckoutSessionId String? @unique
+  stripePaymentStatus     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  buyer   User               @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller  User               @relation("SellerOrders", fields: [sellerId], references: [id])
+  product MarketplaceProduct @relation(fields: [productId], references: [id])
+
+  disputeMessages         DisputeMessage[]
+  MarketplaceOrderMessage MarketplaceOrderMessage[]
+}
+
+// ---------------------------------------------------
+// REGULAR ORDERS (Marketplace Checkout Stripe)
 // ---------------------------------------------------
 
 model Order {
@@ -262,7 +291,7 @@ model Order {
   totalAmount Float
   currency    String      @default("eur")
   createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @default(now()) @updatedAt
+  updatedAt   DateTime    @updatedAt
 
   buyer    User        @relation(fields: [buyerId], references: [id])
   items    OrderItem[]
@@ -402,7 +431,7 @@ model Notification {
 }
 
 // ---------------------------------------------------
-// TAGS SYSTEM
+// TAGS
 // ---------------------------------------------------
 
 model Tag {
@@ -423,34 +452,7 @@ model ProductTag {
 }
 
 // ---------------------------------------------------
-// MARKETPLACE ORDER (Stripe Checkout)
-// ---------------------------------------------------
-
-model MarketplaceOrder {
-  id        Int    @id @default(autoincrement())
-  buyerId   Int
-  sellerId  Int
-  productId Int
-  total     Int
-  currency  String @default("eur")
-  status    String @default("pending")
-
-  stripeCheckoutSessionId String? @unique
-  stripePaymentStatus     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  buyer   User               @relation("BuyerOrders", fields: [buyerId], references: [id])
-  seller  User               @relation("SellerOrders", fields: [sellerId], references: [id])
-  product MarketplaceProduct @relation(fields: [productId], references: [id])
-
-  disputeMessages         DisputeMessage[]
-  MarketplaceOrderMessage MarketplaceOrderMessage[]
-}
-
-// ---------------------------------------------------
-// DISPUTE MESSAGES (LITIGES MARKETPLACE)
+// DISPUTE MESSAGES
 // ---------------------------------------------------
 
 model DisputeMessage {
