@@ -1,15 +1,15 @@
-// frontend/app/api/go/[id]/progress/route.ts
+// app/api/go/[id]/progress/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
-// Enum local → DOIT correspondre à Prisma
+// Liste des steps VALIDES (basés sur Prisma)
 const VALID_STEPS = [
-  "REQUESTED",
-  "ACCEPTED",
-  "IN_PROGRESS",
-  "DONE",
-  "CANCELLED",
+  "ARTISAN_EN_ROUTE",
+  "ARTISAN_ARRIVE",
+  "TRAVAIL_EN_COURS",
+  "TRAVAIL_TERMINE",
+  "EN_ATTENTE_VALIDATION_CLIENT",
 ] as const;
 
 type GoJobStep = (typeof VALID_STEPS)[number];
@@ -19,7 +19,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ID mission
+    // 📌 Récupérer l’ID
     const { id } = await context.params;
     const jobId = Number(id);
 
@@ -30,33 +30,38 @@ export async function POST(
       );
     }
 
-    // Données envoyées
-    const body = await request.json();
-    let step = body.step;
+    // 📌 Lire le body
+    const { step } = await request.json();
 
     if (!step || typeof step !== "string") {
       return NextResponse.json(
-        { error: "Étape absente ou invalide." },
+        { error: "Étape manquante." },
         { status: 400 }
       );
     }
 
-    // Normalisation (strings du frontend → enum Prisma)
-    step = step.toUpperCase();
-
+    // 📌 Vérification : l'étape doit être dans la liste
     if (!VALID_STEPS.includes(step as GoJobStep)) {
       return NextResponse.json(
-        { error: "Étape non reconnue : " + step },
+        {
+          error: "Étape invalide.",
+          allowed: VALID_STEPS,
+        },
         { status: 400 }
       );
     }
 
-    // Auth Supabase
+    // 👤 Auth Supabase
     const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Non authentifié." },
+        { status: 401 }
+      );
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -65,12 +70,12 @@ export async function POST(
 
     if (!dbUser) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable." },
+        { error: "Utilisateur inconnu." },
         { status: 404 }
       );
     }
 
-    // Récupérer la mission
+    // 🔍 Trouver la mission
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
       include: { artisan: true },
@@ -83,7 +88,7 @@ export async function POST(
       );
     }
 
-    // Vérification artisan assigné
+    // ❗ Vérifier que l’artisan est bien celui assigné
     if (job.artisanId !== dbUser.id) {
       return NextResponse.json(
         { error: "Vous n'êtes pas l'artisan assigné à cette mission." },
@@ -91,7 +96,7 @@ export async function POST(
       );
     }
 
-    // Ajouter progression
+    // 📝 Ajouter l’historique
     await prisma.goJobProgress.create({
       data: {
         jobId,
@@ -100,7 +105,7 @@ export async function POST(
       },
     });
 
-    // Mettre à jour étape courante
+    // 🔄 Mise à jour de la mission
     await prisma.goJob.update({
       where: { id: jobId },
       data: { currentStep: step as GoJobStep },
@@ -119,4 +124,3 @@ export async function POST(
     );
   }
 }
-
