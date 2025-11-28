@@ -99,7 +99,6 @@ export default async function GoJobDetailPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-      {/* HEADER */}
       <header className="flex flex-col gap-3 border-b border-gray-100 pb-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold text-gray-900">
@@ -132,9 +131,7 @@ export default async function GoJobDetailPage({
       </header>
 
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
-        {/* COLONNE GAUCHE : INFOS MISSION + TIMELINE */}
         <section className="space-y-6">
-          {/* Bloc infos principales */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
             <div>
               <h2 className="text-sm font-semibold text-gray-900">
@@ -156,10 +153,10 @@ export default async function GoJobDetailPage({
                 <dt className="text-gray-500">Budget indicatif</dt>
                 <dd className="font-medium text-gray-900">
                   {job.price
-                    ? `${job.price.toLocaleString("fr-FR", {
+                    ? job.price.toLocaleString("fr-FR", {
                         style: "currency",
                         currency: "EUR",
-                      })}`
+                      })
                     : "Non renseigné"}
                 </dd>
               </div>
@@ -207,7 +204,6 @@ export default async function GoJobDetailPage({
                       key={photo.id}
                       className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={photo.url}
                         alt={`Photo mission ${job.id}`}
@@ -220,7 +216,6 @@ export default async function GoJobDetailPage({
             )}
           </div>
 
-          {/* TIMELINE DES ÉTAPES */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
             <div className="flex items-center justify-between gap-2">
               <div>
@@ -272,9 +267,7 @@ export default async function GoJobDetailPage({
           </div>
         </section>
 
-        {/* COLONNE DROITE : MAP + ACTIONS */}
         <aside className="space-y-4">
-          {/* MAP */}
           <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
             <h2 className="mb-2 text-sm font-semibold text-gray-900">
               Localisation de la mission
@@ -282,9 +275,8 @@ export default async function GoJobDetailPage({
             {hasGeo ? (
               <div className="h-64 overflow-hidden rounded-lg">
                 <Map
-                  latitude={job.latitude as number}
-                  longitude={job.longitude as number}
-                  title={job.title}
+                  lat={job.latitude as number}
+                  lon={job.longitude as number}
                 />
               </div>
             ) : (
@@ -294,14 +286,12 @@ export default async function GoJobDetailPage({
             )}
           </div>
 
-          {/* ACTIONS ARTISAN */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
             <StepButtons
               jobId={job.id}
               currentStep={job.currentStep as any}
             />
 
-            {/* Bouton "Terminer la mission" si approprié */}
             {(job.status === "IN_PROGRESS" || job.status === "ACCEPTED") && (
               <div className="border-t border-dashed border-gray-200 pt-4">
                 <p className="mb-2 text-[11px] text-gray-600">
