@@ -1,5 +1,3 @@
-// app/api/marketplace/order/[id]/invoice/route.ts
-
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import PDFDocument from "pdfkit";
@@ -13,10 +11,7 @@ export async function GET(
   const orderId = Number(id);
 
   if (Number.isNaN(orderId)) {
-    return NextResponse.json(
-      { error: "Commande introuvable." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "ID invalide" }, { status: 400 });
   }
 
   const order = await prisma.marketplaceOrder.findUnique({
@@ -29,13 +24,10 @@ export async function GET(
   });
 
   if (!order) {
-    return NextResponse.json(
-      { error: "Commande introuvable." },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
   }
 
-  // STREAM FIX COMPATIBLE NEXT 16
+  // STREAM COLLECT
   const pass = new stream.PassThrough();
   const chunks: Uint8Array[] = [];
   pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
@@ -46,11 +38,10 @@ export async function GET(
   doc.fontSize(22).text("Facture Marketplace", { align: "center" });
   doc.moveDown();
 
-  doc.fontSize(12).text(`Facture pour commande #${order.id}`);
+  doc.fontSize(12).text(`Facture commande #${order.id}`);
   doc.text(`Date : ${order.createdAt.toLocaleString("fr-FR")}`);
 
   doc.moveDown();
-
   doc.text(`Produit : ${order.product?.title}`);
   doc.text(
     `Montant : ${order.total.toLocaleString("fr-FR", {
@@ -60,38 +51,35 @@ export async function GET(
   );
 
   doc.moveDown();
-
   doc.text("Client :");
   doc.text(`${order.buyer.firstname} ${order.buyer.lastname}`);
   doc.text(order.buyer.email);
 
   doc.moveDown();
-
   doc.text("Vendeur :");
   doc.text(`${order.seller.firstname} ${order.seller.lastname}`);
   doc.text(order.seller.email);
 
   doc.end();
 
-  // Convert PassThrough → Buffer
+  // Buffer final
   const pdfBuffer: Buffer = await new Promise((resolve) => {
     pass.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
-  // Convert Buffer → ArrayBuffer (100% Blob compatible)
-  const arrayBuffer = pdfBuffer.buffer.slice(
-    pdfBuffer.byteOffset,
-    pdfBuffer.byteOffset + pdfBuffer.byteLength
-  );
+  // ⛔ FIX DEFINITIF : convertir Buffer → Uint8Array
+  const uint8 = new Uint8Array(pdfBuffer);
 
-  // Create Blob for Next.js 16 / Vercel compatibility
-  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+  // ✔️ Compatible 100% Next.js 16 (plus de SharedArrayBuffer)
+  const blob = new Blob([uint8], {
+    type: "application/pdf",
+  });
 
   return new NextResponse(blob, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=facture-${order.id}.pdf`,
+      "Content-Disposition": `attachment; filename="facture-${order.id}.pdf"`,
     },
   });
 }
