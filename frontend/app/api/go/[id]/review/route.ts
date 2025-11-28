@@ -1,5 +1,4 @@
 // frontend/app/api/go/[id]/review/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
@@ -9,15 +8,11 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ✅ OBLIGATOIRE SUR NEXT 16 : await params
     const { id } = await context.params;
     const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
-      return NextResponse.json(
-        { error: "ID invalide" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "ID invalide" }, { status: 400 });
     }
 
     const { rating, comment } = await request.json();
@@ -29,15 +24,14 @@ export async function POST(
       );
     }
 
-    // 🔐 AUTH SUPABASE
+    // AUTH
     const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -51,7 +45,7 @@ export async function POST(
       );
     }
 
-    // 🔍 Vérifier la mission
+    // Vérifier mission
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
     });
@@ -72,35 +66,37 @@ export async function POST(
 
     if (!job.artisanId) {
       return NextResponse.json(
-        { error: "Aucun artisan assigné à cette mission" },
+        { error: "Aucun artisan assigné" },
         { status: 400 }
       );
     }
 
-    // 🛑 Vérifier si déjà évalué
+    // Vérifier si déjà évalué → uniquement via userId + artisanId
     const existing = await prisma.review.findFirst({
-      where: { userId: dbUser.id, artisanId: job.artisanId, jobId },
+      where: { 
+        userId: dbUser.id,
+        artisanId: job.artisanId,
+      },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: "Vous avez déjà laissé un avis pour cette mission" },
+        { error: "Vous avez déjà laissé un avis pour cet artisan" },
         { status: 400 }
       );
     }
 
-    // 📝 Créer l’avis
+    // Créer l’avis
     await prisma.review.create({
       data: {
         rating,
         comment,
         userId: dbUser.id,
         artisanId: job.artisanId,
-        jobId,
       },
     });
 
-    // ⭐ Mise à jour moyenne artisan
+    // Recalcul de la note moyenne artisan
     const stats = await prisma.review.aggregate({
       where: { artisanId: job.artisanId },
       _avg: { rating: true },
