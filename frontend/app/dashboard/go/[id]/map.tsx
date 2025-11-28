@@ -14,10 +14,10 @@ const icon = L.icon({
 export default function Map({ lat, lon }: { lat: number; lon: number }) {
   return (
     <>
-      {/* Fix Turbopack typing issues */}
-      {/* React-leaflet 4.x has incorrect TS types for MapContainer */}
+      {/* react-leaflet 4.x : MapContainer types are broken under Next 16 */}
+      {/* Turbopack requires @ts-ignore OUTSIDE JSX */}
 
-      {/* @ts-expect-error: react-leaflet MapContainer types broken */}
+      // @ts-ignore
       <MapContainer
         center={[lat, lon]}
         zoom={15}
