@@ -48,6 +48,14 @@ export async function markNotificationAsRead(notificationId: number) {
 
 /**
  * Marque TOUTES les notifications comme lues pour l'utilisateur connecté.
+ * (Nouvel alias utilisé par notificationspage.tsx)
+ */
+export async function markAllAsRead() {
+  return markAllNotificationsAsRead();
+}
+
+/**
+ * Marque toutes les notifications comme lues.
  */
 export async function markAllNotificationsAsRead() {
   const user = await getCurrentUser();
@@ -142,7 +150,7 @@ export async function notifyMarketplaceOrderCreated(params: {
     url: `/dashboard/marketplace/sales`,
   });
 
-  // Acheteur : confirmation de commande
+  // Acheteur : confirmation
   await notifyUser({
     userId: buyerId,
     message: `Votre commande #${orderId} pour "${productTitle}" a bien été créée.`,
@@ -206,7 +214,7 @@ export async function notifyMarketplaceOrderDelivered(params: {
 }
 
 /**
- * Nouveau message dans le chat Marketplace (acheteur / vendeur).
+ * Nouveau message dans le chat Marketplace.
  */
 export async function notifyMarketplaceChatMessage(params: {
   orderId: number;
@@ -223,7 +231,7 @@ export async function notifyMarketplaceChatMessage(params: {
 }
 
 /**
- * Litige ouvert sur une commande Marketplace.
+ * Litige ouvert.
  */
 export async function notifyMarketplaceDisputeOpened(params: {
   orderId: number;
