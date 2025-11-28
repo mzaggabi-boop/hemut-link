@@ -23,6 +23,7 @@ export default async function ProductDetailPage({
     where: { id },
     include: {
       seller: true,
+      category: true,      // ← 🔥 IMPORTANT
       photos: true,
       images: true,
     },
@@ -30,7 +31,7 @@ export default async function ProductDetailPage({
 
   if (!product) return notFound();
 
-  // 📌 Image principale logique
+  // Image principale
   const mainImage =
     product.coverImageUrl ||
     product.images?.[0]?.originalUrl ||
@@ -69,9 +70,8 @@ export default async function ProductDetailPage({
         </div>
       </header>
 
-      {/* CONTENU */}
       <div className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        {/* COLONNE GAUCHE – IMAGE + DESCRIPTION */}
+        {/* COLONNE GAUCHE */}
         <section className="space-y-4">
           {/* IMAGE */}
           <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
@@ -100,7 +100,7 @@ export default async function ProductDetailPage({
           </div>
         </section>
 
-        {/* COLONNE DROITE – INFO VENDEUR */}
+        {/* COLONNE DROITE */}
         <aside className="space-y-4">
           {/* INFO PRODUIT */}
           <div className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
@@ -153,3 +153,4 @@ export default async function ProductDetailPage({
     </main>
   );
 }
+
