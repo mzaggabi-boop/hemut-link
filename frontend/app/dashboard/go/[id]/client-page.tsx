@@ -70,8 +70,7 @@ export default async function ClientGoJobPage({
           Artisan assigné :{" "}
           {job.artisan ? (
             <span className="font-medium text-gray-900">
-              {job.artisan.firstname} {job.artisan.lastname} (
-              {job.artisan.email})
+              {job.artisan.firstname} {job.artisan.lastname} ({job.artisan.email})
             </span>
           ) : (
             "Aucun artisan pour l'instant"
@@ -82,6 +81,7 @@ export default async function ClientGoJobPage({
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
         {/* COLONNE GAUCHE */}
         <section className="space-y-6">
+
           {/* INFO */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-2">
             <h2 className="text-sm font-semibold text-gray-900">Détails</h2>
@@ -204,7 +204,6 @@ export default async function ClientGoJobPage({
                 <Map
                   lat={job.latitude as number}
                   lon={job.longitude as number}
-                  title={job.title}
                 />
               </div>
             ) : (
