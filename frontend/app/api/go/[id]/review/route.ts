@@ -3,20 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
-type RouteContext = {
-  params: { id: string };
-};
-
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    // 🔹 Récupération & validation de l'ID de mission
-    const jobId = Number(context.params.id);
+    const { id } = await context.params;
+    const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
       return NextResponse.json({ error: "ID invalide" }, { status: 400 });
     }
 
-    // 🔹 Corps de la requête
     const body = await request.json().catch(() => null);
     const rating = body?.rating;
     const comment = body?.comment ?? null;
@@ -28,7 +26,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // 🔹 Authentification via Supabase
     const supabase = supabaseServer();
     const {
       data: { user },
@@ -49,7 +46,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // 🔹 Vérifier la mission GO
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
     });
@@ -61,7 +57,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Le client doit être le propriétaire de la mission
     if (job.clientId !== dbUser.id) {
       return NextResponse.json(
         { error: "Vous ne pouvez évaluer que vos propres missions" },
@@ -69,7 +64,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // L'artisan doit être assigné
     if (!job.artisanId) {
       return NextResponse.json(
         { error: "Aucun artisan assigné" },
@@ -79,9 +73,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const artisanId = job.artisanId;
 
-    // 🔹 Vérifier si déjà évalué (par user pour cet artisan)
-    // 👉 Le modèle Prisma n'a PAS de jobId sur Review,
-    //    donc on se base sur (userId + artisanId).
     const existing = await prisma.review.findFirst({
       where: {
         userId: dbUser.id,
@@ -96,7 +87,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // 🔹 Créer l’avis
     await prisma.review.create({
       data: {
         rating,
@@ -106,7 +96,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       },
     });
 
-    // 🔹 Recalcul de la note moyenne de l'artisan
     const stats = await prisma.review.aggregate({
       where: { artisanId: artisanId },
       _avg: { rating: true },
@@ -114,9 +103,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     await prisma.businessProfile.update({
       where: { userId: artisanId },
-      data: {
-        rating: stats._avg.rating ?? 0,
-      },
+      data: { rating: stats._avg.rating ?? 0 },
     });
 
     return NextResponse.json({ success: true });
@@ -128,3 +115,4 @@ export async function POST(request: NextRequest, context: RouteContext) {
     );
   }
 }
+
