@@ -31,20 +31,16 @@ export async function GET(
       );
     }
 
-    // 🔥 PDF → Web-compatible Uint8Array
+    // STREAM PDF → Uint8Array
     const pass = new stream.PassThrough();
     const doc = new PDFDocument({ margin: 40 });
 
     const chunks: Uint8Array[] = [];
-
     pass.on("data", (chunk) => chunks.push(chunk as Uint8Array));
-    pass.on("error", (err) => {
-      console.error("PDF STREAM ERROR:", err);
-    });
 
     doc.pipe(pass);
 
-    // ----------- PDF CONTENU -----------
+    // ----- CONTENU PDF -----
     doc.fontSize(22).text("Facture Marketplace", { align: "center" });
     doc.moveDown();
 
@@ -69,11 +65,10 @@ export async function GET(
     doc.text("Vendeur :");
     doc.text(`${order.seller.firstname} ${order.seller.lastname}`);
     doc.text(order.seller.email);
-    // -----------------------------------
+    // ------------------------
 
     doc.end();
 
-    // ⬇️ Transformation compatible Next.js 16 / Vercel
     const pdfBuffer: Uint8Array = await new Promise((resolve) => {
       pass.on("end", () => resolve(Buffer.concat(chunks)));
     });
