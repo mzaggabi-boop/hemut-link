@@ -1,14 +1,15 @@
-// app/api/go/[id]/validate/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
-  req: Request,
-   context: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = parseInt(context.params.id);
+    const { id } = await context.params;
+    const jobId = parseInt(id);
+
     if (isNaN(jobId)) {
       return NextResponse.json(
         { error: "ID de mission invalide." },
@@ -16,13 +17,14 @@ export async function POST(
       );
     }
 
-    // AUTH
     const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json(
-        { error: "Non authentifié." },
+        { error: "Utilisateur non authentifié." },
         { status: 401 }
       );
     }
@@ -38,7 +40,6 @@ export async function POST(
       );
     }
 
-    // CHARGER LA MISSION
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
     });
@@ -50,39 +51,23 @@ export async function POST(
       );
     }
 
-    // SEUL LE CLIENT PEUT VALIDER
     if (job.clientId !== dbUser.id) {
       return NextResponse.json(
-        { error: "Vous n'êtes pas le client de cette mission." },
+        { error: "Vous n'êtes pas le client associé à cette mission." },
         { status: 403 }
       );
     }
 
-    // DÉJÀ TERMINÉE ?
-    if (job.status === "COMPLETED") {
-      return NextResponse.json(
-        { error: "La mission est déjà validée." },
-        { status: 400 }
-      );
-    }
-
-    // MISE À JOUR FINALE
     await prisma.goJob.update({
       where: { id: jobId },
-      data: {
-        status: "COMPLETED",
-        currentStep: "EN_ATTENTE_VALIDATION_CLIENT",
-      },
+      data: { status: "COMPLETED" },
     });
 
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("VALIDATE ERROR:", error);
     return NextResponse.json(
-      { success: true, message: "Mission validée avec succès." },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("GO VALIDATE ERROR:", err);
-    return NextResponse.json(
-      { error: "Erreur serveur." },
+      { error: "Erreur interne du serveur." },
       { status: 500 }
     );
   }
