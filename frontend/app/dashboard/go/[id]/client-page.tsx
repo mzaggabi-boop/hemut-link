@@ -2,8 +2,7 @@
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Map from "./map";
-import ValidateButton from "./complete-button";  // ✔ CORRIGÉ
-
+import ValidateButton from "./complete-button";
 
 function formatDate(date: Date) {
   return date.toLocaleString("fr-FR", {
@@ -203,8 +202,8 @@ export default async function ClientGoJobPage({
             {hasGeo ? (
               <div className="h-64 overflow-hidden rounded-lg">
                 <Map
-                  latitude={job.latitude as number}
-                  longitude={job.longitude as number}
+                  lat={job.latitude as number}
+                  lon={job.longitude as number}
                   title={job.title}
                 />
               </div>
@@ -215,31 +214,31 @@ export default async function ClientGoJobPage({
             )}
           </div>
 
-          {/* AVIS + VALIDATION CLIENT (prochain module) */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
-  <p className="text-xs text-gray-600">
-    Si la mission est bien terminée, vous pouvez maintenant la valider.
-  </p>
+          {/* AVIS + VALIDATION CLIENT */}
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+            <p className="text-xs text-gray-600">
+              Si la mission est bien terminée, vous pouvez maintenant la
+              valider.
+            </p>
 
-  {job.status !== "COMPLETED" ? (
-    <ValidateButton jobId={job.id} />
-  ) : (
-    <p className="text-[11px] text-emerald-700">
-      ✔ Mission déjà validée
-    </p>
-  )}
-</div>
-{/* LIEN POUR LAISSER UN AVIS */}
-{job.status === "COMPLETED" && (
-  <a
-    href={`/dashboard/go/${job.id}/review`}
-    className="block text-center text-xs font-medium text-blue-600 underline"
-  >
-    Laisser un avis sur l’artisan
-  </a>
-)}
+            {job.status !== "COMPLETED" ? (
+              <ValidateButton jobId={job.id} />
+            ) : (
+              <p className="text-[11px] text-emerald-700">
+                ✔ Mission déjà validée
+              </p>
+            )}
+          </div>
 
-
+          {/* LIEN POUR AVIS */}
+          {job.status === "COMPLETED" && (
+            <a
+              href={`/dashboard/go/${job.id}/review`}
+              className="block text-center text-xs font-medium text-blue-600 underline"
+            >
+              Laisser un avis sur l’artisan
+            </a>
+          )}
         </aside>
       </div>
     </main>
