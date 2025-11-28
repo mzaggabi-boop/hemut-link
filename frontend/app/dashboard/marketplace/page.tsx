@@ -20,7 +20,6 @@ export default async function MarketplacePage({
 
   /**
    * BUILD DU WHERE CLAUSE
-   * On évite les objets vides pour garder les requêtes propres.
    */
   const whereClause: any = { AND: [] };
 
@@ -39,13 +38,12 @@ export default async function MarketplacePage({
     });
   }
 
-  // Si AND est vide → on le supprime pour éviter AND: [] inutile
   if (whereClause.AND.length === 0) {
     delete whereClause.AND;
   }
 
-  // FETCH DES PRODUITS
-  const products = await prisma.product.findMany({
+  // 🌟 FETCH DES PRODUITS (MarketplaceProduct)
+  const products = await prisma.marketplaceProduct.findMany({
     where: whereClause,
     orderBy: { createdAt: "desc" },
     include: {
@@ -53,8 +51,8 @@ export default async function MarketplacePage({
     },
   });
 
-  // FETCH DES CATÉGORIES UNIQUES
-  const categories = await prisma.product.findMany({
+  // 🌟 FETCH DES CATÉGORIES UNIQUES
+  const categories = await prisma.marketplaceProduct.findMany({
     select: { category: true },
     where: { category: { not: null } },
     distinct: ["category"],
@@ -63,6 +61,7 @@ export default async function MarketplacePage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+      
       {/* HEADER */}
       <header className="flex flex-col gap-2 border-b border-gray-100 pb-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -85,6 +84,7 @@ export default async function MarketplacePage({
       {/* BARRE DE RECHERCHE + FILTRES */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
         <form className="flex flex-col gap-3 md:flex-row md:items-center">
+          
           {/* RECHERCHE */}
           <input
             name="q"
@@ -132,11 +132,11 @@ export default async function MarketplacePage({
               className="block rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition"
             >
               <div className="aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 mb-3">
+                
                 {/* IMAGE */}
-                {product.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
+                {product.coverImageUrl ? (
                   <img
-                    src={product.image}
+                    src={product.coverImageUrl}
                     alt={product.title}
                     className="h-full w-full object-cover"
                   />
@@ -161,7 +161,7 @@ export default async function MarketplacePage({
               )}
 
               <p className="mt-2 text-sm font-semibold text-gray-900">
-                {formatCurrency(product.price ?? 0)}
+                {formatCurrency(product.price)}
               </p>
             </Link>
           ))
