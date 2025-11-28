@@ -33,7 +33,9 @@ export default async function MarketplacePage({
 
   if (category.length > 0) {
     whereClause.AND.push({
-      category: { equals: category },
+      category: {
+        is: { name: category }
+      }
     });
   }
 
@@ -47,15 +49,16 @@ export default async function MarketplacePage({
     orderBy: { createdAt: "desc" },
     include: {
       seller: true,
+      category: true,
     },
   });
 
   // FETCH DES CATÉGORIES UNIQUES
   const categories = await prisma.marketplaceProduct.findMany({
     select: { category: true },
-    where: { category: { NOT: null } },   // <-- FIX ICI
-    distinct: ["category"],
-    orderBy: { category: "asc" },
+    where: { categoryId: { NOT: null } },
+    distinct: ["categoryId"],
+    orderBy: { categoryId: "asc" },
   });
 
   return (
@@ -96,11 +99,13 @@ export default async function MarketplacePage({
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
           >
             <option value="">Toutes catégories</option>
-            {categories.map((c, i) => (
-              <option key={i} value={c.category ?? ""}>
-                {c.category}
-              </option>
-            ))}
+            {categories.map((c, i) =>
+              c.category ? (
+                <option key={i} value={c.category.name}>
+                  {c.category.name}
+                </option>
+              ) : null
+            )}
           </select>
 
           <button
