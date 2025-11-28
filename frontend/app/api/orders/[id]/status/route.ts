@@ -7,7 +7,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // paramètre dynamique
+    // Récupération param dynamique
     const { id } = await context.params;
     const orderId = Number(id);
 
@@ -24,7 +24,7 @@ export async function POST(
       );
     }
 
-    // Récupération du statut à mettre à jour
+    // Récupération du statut envoyé
     const body = await request.json();
     const { status } = body;
 
@@ -35,9 +35,20 @@ export async function POST(
       );
     }
 
-    // Vérifier que la commande existe
+    // Charger la commande + produits + vendeur
     const order = await prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                seller: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -47,8 +58,11 @@ export async function POST(
       );
     }
 
-    // Vérifier que c'est l'utilisateur concerné
-    if (order.buyerId !== user.id && order.sellerId !== user.id) {
+    // Trouver le vendeur depuis le 1er produit
+    const sellerId = order.items[0]?.product?.sellerId ?? null;
+
+    // Vérification des droits
+    if (order.buyerId !== user.id && sellerId !== user.id) {
       return NextResponse.json(
         { error: "Accès interdit" },
         { status: 403 }
