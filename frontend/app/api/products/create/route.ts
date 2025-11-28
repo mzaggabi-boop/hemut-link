@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         )
       );
 
-      await prisma.marketplaceProductTag.createMany({
+      await prisma.productTag.createMany({
         data: createdTags.map((t) => ({
           productId: product.id,
           tagId: t.id,
