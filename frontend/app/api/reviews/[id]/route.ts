@@ -22,7 +22,7 @@ export async function GET(
       where: { artisanId },
       orderBy: { createdAt: "desc" },
       include: {
-        author: true,
+        user: true,
       },
     });
 
