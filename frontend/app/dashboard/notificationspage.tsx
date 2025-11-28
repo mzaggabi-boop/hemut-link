@@ -24,11 +24,24 @@ export default async function NotificationsPage() {
           <ul className="divide-y divide-gray-100 text-xs">
             {notifications.map((n) => (
               <li key={n.id} className="py-3">
-                <p className="font-semibold">{n.title}</p>
+                <p className="font-semibold text-gray-900">
+                  Notification
+                </p>
+
                 <p className="text-gray-700">{n.message}</p>
+
                 <p className="text-[10px] text-gray-400 mt-1">
                   {new Date(n.createdAt).toLocaleString("fr-FR")}
                 </p>
+
+                {n.url && (
+                  <a
+                    href={n.url}
+                    className="text-[11px] text-blue-600 underline mt-1 block"
+                  >
+                    Voir la page
+                  </a>
+                )}
               </li>
             ))}
           </ul>
