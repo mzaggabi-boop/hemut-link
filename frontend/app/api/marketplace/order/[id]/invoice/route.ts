@@ -13,7 +13,10 @@ export async function GET(
   const orderId = Number(id);
 
   if (Number.isNaN(orderId)) {
-    return NextResponse.json({ error: "Commande introuvable." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Commande introuvable." },
+      { status: 400 }
+    );
   }
 
   const order = await prisma.marketplaceOrder.findUnique({
@@ -26,7 +29,10 @@ export async function GET(
   });
 
   if (!order) {
-    return NextResponse.json({ error: "Commande introuvable." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Commande introuvable." },
+      { status: 404 }
+    );
   }
 
   // STREAM FIX COMPATIBLE NEXT 16
@@ -72,8 +78,14 @@ export async function GET(
     pass.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
-  // Convert Buffer → Blob (Next 16 OK)
-  const blob = new Blob([pdfBuffer], { type: "application/pdf" });
+  // Convert Buffer → ArrayBuffer (100% Blob compatible)
+  const arrayBuffer = pdfBuffer.buffer.slice(
+    pdfBuffer.byteOffset,
+    pdfBuffer.byteOffset + pdfBuffer.byteLength
+  );
+
+  // Create Blob for Next.js 16 / Vercel compatibility
+  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
 
   return new NextResponse(blob, {
     status: 200,
