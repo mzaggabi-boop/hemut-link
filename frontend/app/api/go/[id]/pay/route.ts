@@ -1,10 +1,10 @@
+// app/api/go/[id]/pay/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 import Stripe from "stripe";
 
-// ❌ On supprime apiVersion (ça casse Next 16)
-// ✔️ Stripe choisit automatiquement la plus récente depuis ton dashboard
+// ❌ NE PAS mettre apiVersion → casse le build Next 16
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(
@@ -16,20 +16,14 @@ export async function POST(
     const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
-      return NextResponse.json(
-        { error: "ID invalide." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "ID invalide." }, { status: 400 });
     }
 
     const supabase = supabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Non authentifié." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -55,7 +49,7 @@ export async function POST(
       );
     }
 
-    // CRÉATION SESSION STRIPE
+    // SESSION STRIPE
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -78,7 +72,6 @@ export async function POST(
     });
 
     return NextResponse.json({ url: session.url });
-
   } catch (err) {
     console.error("PAY ERROR:", err);
     return NextResponse.json(
@@ -87,4 +80,3 @@ export async function POST(
     );
   }
 }
-
