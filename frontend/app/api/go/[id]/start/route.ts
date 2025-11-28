@@ -1,36 +1,59 @@
-// frontend/app/api/go/[id]/start/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { supabaseServer } from "@/lib/supabase-server";
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const jobId = Number(context.params.id);
+    const { id } = await context.params;
+    const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
+      return NextResponse.json({ error: "ID invalide" }, { status: 400 });
+    }
+
+    const supabase = supabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { supabaseId: user.id },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    }
+
+    const job = await prisma.goJob.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) {
+      return NextResponse.json({ error: "Mission introuvable" }, { status: 404 });
+    }
+
+    if (job.artisanId !== dbUser.id) {
       return NextResponse.json(
-        { error: "ID invalide." },
-        { status: 400 }
+        { error: "Vous n'êtes pas assigné à cette mission" },
+        { status: 403 }
       );
     }
 
     await prisma.goJob.update({
       where: { id: jobId },
-      data: {
-        status: "IN_PROGRESS",
-        currentStep: "EN_ROUTE",
-      },
+      data: { status: "IN_PROGRESS" },
     });
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error("Erreur START:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur." },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("START JOB ERROR:", err);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
