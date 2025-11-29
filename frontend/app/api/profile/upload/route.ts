@@ -1,4 +1,4 @@
-// UPLOAD FILE API - CODE � COLLER
+// UPLOAD FILE API - CODE À COLLER
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
 import prisma from "@/lib/prisma";
@@ -7,7 +7,8 @@ export const runtime = "edge";
 
 export async function POST(req: Request) {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -43,15 +44,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // --- NOM DE FICHIER ---
     const ext = file.name.split(".").pop();
     const filePath = `${dbUser.id}/${type}.${ext}`;
 
-    // --- UPLOAD SUPABASE STORAGE ---
-    const { data: uploadData, error: uploadError } =
-      await supabase.storage
-        .from("business-docs")
-        .upload(filePath, file, { upsert: true });
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("business-docs")
+      .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
       console.error(uploadError);
@@ -65,11 +63,10 @@ export async function POST(req: Request) {
       .from("business-docs")
       .getPublicUrl(filePath).data.publicUrl;
 
-    // --- UPDATE PRISMA ---
     const fieldMap: Record<string, string> = {
       certification: "certifications",
       insurance: "insuranceDocs",
-      logo: "companyName", // (on mettra un champ logo dans ton Prisma si tu veux)
+      logo: "companyName",
       document: "insuranceDocs",
     };
 
@@ -94,4 +91,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
