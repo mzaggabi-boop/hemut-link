@@ -66,18 +66,17 @@ export async function GET(
     const commission = p.commission;
     const net = brut - commission;
 
-    rows.push([
-     String(p.id),
-      new Date(p.createdAt).toLocaleString("fr-FR"),
-      type,
-      label,
-      p.sender?.email || "",
-      brut,
-      commission,
-      net,
-      p.status,
-    ]);
-  }
+rows.push([
+  String(p.id),
+  new Date(p.createdAt).toLocaleString("fr-FR"),
+  type,
+  label,
+  p.sender?.email || "",
+  String(brut),
+  String(commission),
+  String(net),
+  p.status,
+]);
 
   const csv = rows.map((r) => r.join(";")).join("\n");
 
