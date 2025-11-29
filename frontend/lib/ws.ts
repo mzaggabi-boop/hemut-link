@@ -1,4 +1,4 @@
-import { AppNotification } from "../store/notificationsStore";
+import { AppNotification } from "../app/store/notificationsStore";
 
 const WS_URL =
   process.env.NEXT_PUBLIC_NOTIFICATIONS_WS_URL ??
@@ -8,7 +8,6 @@ export function initNotificationsWebSocket(
   token: string,
   onNotification: (notif: AppNotification) => void
 ): () => void {
-  // Le backend déduit l'utilisateur depuis le token
   const url = `${WS_URL}?token=${encodeURIComponent(token)}`;
   const socket = new WebSocket(url);
 
@@ -19,13 +18,12 @@ export function initNotificationsWebSocket(
         onNotification(data.notification as AppNotification);
       }
     } catch {
-      // ignore parse error
+      // ignore
     }
   };
 
-  // Reconnexion simple si nécessaire
   socket.onclose = () => {
-    // on laisse la reconnection gérée côté composant si besoin
+    // handled by component if needed
   };
 
   return () => {
