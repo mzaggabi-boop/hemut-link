@@ -7,7 +7,9 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{}> }
 ) {
-  const supabase = supabaseServer();
+  // FIX : OBLIGATOIRE
+  const supabase = await supabaseServer();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -83,10 +85,11 @@ export async function GET(
     ]);
   }
 
-  // Génération CSV
-  const csv = rows.map((r) =>
-    r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")
-  ).join("\n");
+  const csv = rows
+    .map((r) =>
+      r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")
+    )
+    .join("\n");
 
   return new NextResponse(csv, {
     status: 200,
