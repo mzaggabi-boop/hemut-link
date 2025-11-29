@@ -5,9 +5,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import stripe from "@/lib/stripe"; // ✔ FIX
 
 export async function POST(
   request: NextRequest,
@@ -22,7 +20,6 @@ export async function POST(
     }
 
     const supabase = await supabaseServer();
-
     const {
       data: { user },
     } = await supabase.auth.getUser();
