@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 import Stripe from "stripe";
 
-// ❌ NE PAS mettre apiVersion → casse le build Next 16
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(
@@ -19,8 +18,11 @@ export async function POST(
       return NextResponse.json({ error: "ID invalide." }, { status: 400 });
     }
 
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await supabaseServer();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
@@ -49,7 +51,6 @@ export async function POST(
       );
     }
 
-    // SESSION STRIPE
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -80,3 +81,4 @@ export async function POST(
     );
   }
 }
+
