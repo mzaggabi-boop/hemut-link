@@ -55,30 +55,38 @@ export async function GET(
   ];
 
   for (const p of payments) {
-    const type = p.order ? "Commande" : p.job ? "Mission Go" : "Autre";
+    const type = p.order
+      ? "Commande"
+      : p.job
+      ? "Mission Go"
+      : "Autre";
 
     const label =
       p.order?.items?.[0]?.product?.title ||
       p.job?.title ||
       "—";
 
-    const brut = p.amount;
-    const commission = p.commission;
+    const brut = Number(p.amount);
+    const commission = Number(p.commission);
     const net = brut - commission;
 
-rows.push([
-  String(p.id),
-  new Date(p.createdAt).toLocaleString("fr-FR"),
-  type,
-  label,
-  p.sender?.email || "",
-  String(brut),
-  String(commission),
-  String(net),
-  p.status,
-]);
+    rows.push([
+      String(p.id),
+      new Date(p.createdAt).toLocaleString("fr-FR"),
+      type,
+      label,
+      p.sender?.email || "",
+      String(brut),
+      String(commission),
+      String(net),
+      p.status,
+    ]);
+  }
 
-  const csv = rows.map((r) => r.join(";")).join("\n");
+  // Génération CSV
+  const csv = rows.map((r) =>
+    r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")
+  ).join("\n");
 
   return new NextResponse(csv, {
     status: 200,
