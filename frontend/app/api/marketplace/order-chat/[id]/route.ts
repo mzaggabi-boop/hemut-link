@@ -30,8 +30,9 @@ export async function POST(
 
   const { content, imageUrl } = await req.json();
 
-  // Auth
-  const supabase = supabaseServer();
+  // Auth FIX
+  const supabase = await supabaseServer();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -46,7 +47,6 @@ export async function POST(
   if (!dbUser)
     return NextResponse.json({ error: "Compte introuvable" }, { status: 404 });
 
-  // Vérification que l'utilisateur appartient à la commande
   const order = await prisma.marketplaceOrder.findUnique({
     where: { id: orderId },
   });
