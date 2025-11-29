@@ -18,25 +18,26 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!id) return;
 
-    // ⚠️ Points temporaires (tu remplaceras par les vrais)
-    const startPoint: LatLng = { lat: 48.8566, lng: 2.3522 }; // Paris
-    const endPoint: LatLng = { lat: 48.8666, lng: 2.335 };   // Paris 2
+    // ⚠️ Coordonnées temporaires (OK pour tests)
+    const startPoint: LatLng = { lat: 48.8566, lng: 2.3522 };
+    const endPoint: LatLng = { lat: 48.8666, lng: 2.335 };
 
     getRouteInfo(startPoint, endPoint)
       .then((result) => {
-        if (!result || !result.route) {
+        if (!result || !result.geometry) {
           setError("Impossible de récupérer l'itinéraire.");
           return;
         }
 
-        setStart(result.start);
-        setEnd(result.end);
-        setRoute(result.route);
+        setStart(startPoint);
+        setEnd(endPoint);
+        setRoute(result);
       })
       .catch((err) => {
         console.error("Mapbox error:", err);
         setError("Erreur lors du chargement du trajet.");
       });
+
   }, [id]);
 
   return (
@@ -49,10 +50,10 @@ export default function TrackingPage() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      {start && end ? (
+      {start && end && route ? (
         <MapRoute
-          start={[start.lng, start.lat]}   // ✅ FIX FORMAT
-          end={[end.lng, end.lat]}         // ✅ FIX FORMAT
+          start={{ lat: start.lat, lng: start.lng }}
+          end={{ lat: end.lat, lng: end.lng }}
           route={route}
         />
       ) : (
@@ -61,5 +62,4 @@ export default function TrackingPage() {
     </div>
   );
 }
-
 
