@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-export function supabaseServer() {
-  const cookieStore = cookies(); // ❗ PAS de await
+export async function supabaseServer() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +25,7 @@ export function supabaseServer() {
         },
         remove(name: string) {
           try {
-            cookieStore.delete(name); // ❗ UN SEUL paramètre
+            cookieStore.delete(name);
           } catch {
             // Vercel fallback
           }
