@@ -1,4 +1,6 @@
 // app/dashboard/m10/litige/page.tsx
+export const dynamic = "force-dynamic";
+
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 
@@ -13,7 +15,6 @@ function formatDate(date: Date) {
 }
 
 export default async function LitigeListPage() {
-  // Les litiges sont les commandes Marketplace avec status = "dispute"
   const disputes = await prisma.marketplaceOrder.findMany({
     where: { status: "dispute" },
     include: {
