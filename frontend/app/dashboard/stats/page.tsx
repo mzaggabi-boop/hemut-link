@@ -13,7 +13,7 @@ type PaymentPoint = {
 export const dynamic = "force-dynamic";
 
 export default async function StatsPage() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -32,7 +32,6 @@ export default async function StatsPage() {
 
   if (!dbUser) return notFound();
 
-  // Paiements reçus (ventes) pour ce vendeur
   const payments = await prisma.payment.findMany({
     where: {
       receiverId: dbUser.id,
@@ -41,12 +40,10 @@ export default async function StatsPage() {
     orderBy: { createdAt: "asc" },
   });
 
-  // Produits en vente
   const productsCount = await prisma.marketplaceProduct.count({
     where: { sellerId: dbUser.id },
   });
 
-  // Nombre de favoris sur ses produits
   const favoritesCount = await prisma.marketplaceFavorite.count({
     where: {
       product: {
@@ -55,7 +52,6 @@ export default async function StatsPage() {
     },
   });
 
-  // Stats simples
   const now = new Date();
   const days30Ago = new Date();
   days30Ago.setDate(now.getDate() - 30);
@@ -81,7 +77,7 @@ export default async function StatsPage() {
     }
 
     const d = p.createdAt;
-    const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
+    const key = d.toISOString().slice(0, 10);
 
     if (!seriesMap[key]) {
       seriesMap[key] = {
@@ -111,7 +107,6 @@ export default async function StatsPage() {
         </p>
       </header>
 
-      {/* Cartes de synthèse */}
       <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           label="CA brut total"
@@ -133,13 +128,8 @@ export default async function StatsPage() {
         />
       </section>
 
-      {/* Cartes secondaires */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard
-          label="Produits en vente"
-          value={productsCount}
-          integer
-        />
+        <StatCard label="Produits en vente" value={productsCount} integer />
         <StatCard
           label="Favoris sur vos produits"
           value={favoritesCount}
@@ -152,7 +142,6 @@ export default async function StatsPage() {
         />
       </section>
 
-      {/* Graphiques */}
       <section className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -210,4 +199,3 @@ function StatCard({
     </div>
   );
 }
-
