@@ -1,10 +1,8 @@
-// frontend/lib/supabase-server.ts
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-export async function supabaseServer() {
-  // IMPORTANT : cookies() doit être await pour Next.js 13+ / 16
-  const cookieStore = await cookies();
+export function supabaseServer() {
+  const cookieStore = cookies(); // ❗ PAS de await
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,18 +12,22 @@ export async function supabaseServer() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: CookieOptions) {
           try {
-            cookieStore.set(name, value, options);
+            cookieStore.set({
+              name,
+              value,
+              ...options,
+            });
           } catch {
-            // Survercel serverless fallback
+            // Vercel fallback
           }
         },
-        remove(name: string, options: any) {
+        remove(name: string) {
           try {
-            cookieStore.delete(name, options);
+            cookieStore.delete(name); // ❗ UN SEUL paramètre
           } catch {
-            // Survercel serverless fallback
+            // Vercel fallback
           }
         },
       },
