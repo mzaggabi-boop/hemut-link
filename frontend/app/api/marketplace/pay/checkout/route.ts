@@ -1,4 +1,7 @@
 // app/api/marketplace/pay/checkout/route.ts
+
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import stripe from "@/lib/stripe";
@@ -16,7 +19,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // AUTH FIX
     const supabase = await supabaseServer();
 
     const {
@@ -36,7 +38,6 @@ export async function POST(req: Request) {
         { status: 404 }
       );
 
-    // RÉCUPÉRATION COMMANDE
     const order = await prisma.marketplaceOrder.findUnique({
       where: { id: orderId },
       include: {
@@ -63,7 +64,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
 
-    // CREATION SESSION STRIPE CHECKOUT
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -88,7 +88,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // SAUVEGARDE ID SESSION
     await prisma.marketplaceOrder.update({
       where: { id: order.id },
       data: {
@@ -99,7 +98,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url }, { status: 200 });
   } catch (err: any) {
-    console.error("CHECKOUT ERROR:", err);
     return NextResponse.json(
       { error: "Erreur serveur lors de la création du paiement" },
       { status: 500 }
