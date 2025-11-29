@@ -1,4 +1,6 @@
 // app/dashboard/marketplace/new/page.tsx
+export const dynamic = "force-dynamic";
+
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -31,12 +33,11 @@ async function createProduct(formData: FormData) {
     redirect("/dashboard/marketplace/new");
   }
 
-  // ✅ FIX : use MarketplaceProduct
   const product = await prisma.marketplaceProduct.create({
     data: {
       title,
       description,
-      categoryId: null, // category is now an ID (MarketplaceCategory)
+      categoryId: category ? Number(category) : null,
       coverImageUrl: image || null,
       price,
       sellerId: user.id,
@@ -47,14 +48,12 @@ async function createProduct(formData: FormData) {
 }
 
 export default async function NewMarketplaceProductPage() {
-  // Récupération catégories depuis MarketplaceCategory
   const categories = await prisma.marketplaceCategory.findMany({
     orderBy: { name: "asc" },
   });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6 space-y-6">
-      {/* HEADER */}
       <header className="border-b border-gray-100 pb-4 space-y-1">
         <h1 className="text-xl font-semibold text-gray-900">
           Publier un produit — Marketplace
@@ -64,12 +63,10 @@ export default async function NewMarketplaceProductPage() {
         </p>
       </header>
 
-      {/* FORM */}
       <form
         action={createProduct}
         className="space-y-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
       >
-        {/* Title + Category */}
         <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="space-y-1">
             <label
@@ -111,7 +108,6 @@ export default async function NewMarketplaceProductPage() {
           </div>
         </div>
 
-        {/* Price + image */}
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-1">
             <label
@@ -149,7 +145,6 @@ export default async function NewMarketplaceProductPage() {
           </div>
         </div>
 
-        {/* Description */}
         <div className="space-y-1">
           <label
             htmlFor="description"
@@ -166,7 +161,6 @@ export default async function NewMarketplaceProductPage() {
           />
         </div>
 
-        {/* ACTION */}
         <div className="flex items-center justify-between border-t border-dashed pt-2">
           <p className="text-[11px] text-gray-500">
             Une fois publiée, l’annonce apparaîtra dans la Marketplace.
