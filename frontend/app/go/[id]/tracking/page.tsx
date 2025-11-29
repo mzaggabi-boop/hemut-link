@@ -13,26 +13,31 @@ export default function TrackingPage() {
   const [start, setStart] = useState<LatLng | null>(null);
   const [end, setEnd] = useState<LatLng | null>(null);
   const [route, setRoute] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
     getRouteInfo(Number(id))
       .then((result) => {
-        if (!result) return;
+        if (!result) {
+          setError("Impossible de récupérer l'itinéraire.");
+          return;
+        }
 
         setStart(result.start);
         setEnd(result.end);
         setRoute(result.route);
       })
-      .catch((err) => console.error("Mapbox error:", err));
+      .catch((err) => {
+        console.error("Mapbox error:", err);
+        setError("Erreur lors du chargement du trajet.");
+      });
   }, [id]);
 
-  // Convert {lat, lng} to [lat, lng] tuple (latitude first, longitude second)
-  const startArray =
-    start ? ([start.lat, start.lng] as [number, number]) : null;
-  const endArray =
-    end ? ([end.lat, end.lng] as [number, number]) : null;
+  // Mapbox requiert des tableaux [lng, lat]
+  const startArray = start ? ([start.lng, start.lat] as [number, number]) : null;
+  const endArray = end ? ([end.lng, end.lat] as [number, number]) : null;
 
   return (
     <div className="p-6 space-y-4">
@@ -42,6 +47,8 @@ export default function TrackingPage() {
 
       <h1 className="text-xl font-semibold">Suivi du trajet</h1>
 
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
       {startArray && endArray ? (
         <MapRoute start={startArray} end={endArray} route={route} />
       ) : (
@@ -50,3 +57,4 @@ export default function TrackingPage() {
     </div>
   );
 }
+
