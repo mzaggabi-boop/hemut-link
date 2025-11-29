@@ -1,11 +1,14 @@
 // frontend/app/marketplace/[id]/payment-cancelpage.tsx
 "use client";
 
-import Button from "../../../components/Button"; // ✅ CORRECT PATH
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import Button from "@/components/Button"; // ✅ Chemin absolu correct
 
 export default function MarketplacePaymentCancel() {
   const router = useRouter();
+  const params = useParams();
+
+  const id = params?.id; // ✅ Récupération correcte du paramètre dynamique
 
   return (
     <div className="p-6 space-y-6 max-w-xl mx-auto">
@@ -21,7 +24,7 @@ export default function MarketplacePaymentCancel() {
 
       <div className="bg-neutral-900 border border-red-500/40 rounded-xl p-4 mt-4">
         <p className="text-neutral-400 text-sm">
-          Aucune somme n’a été prélevée.  
+          Aucune somme n’a été prélevée.<br />
           Vous pouvez recommencer la procédure en toute sécurité.
         </p>
       </div>
@@ -29,7 +32,7 @@ export default function MarketplacePaymentCancel() {
       <Button
         variant="primary"
         className="w-full"
-        onClick={() => router.push(`/marketplace/${router.query?.id}/pay`)}
+        onClick={() => router.push(`/marketplace/${id}/pay`)} // ✅ FIX
       >
         Réessayer le paiement →
       </Button>
@@ -37,7 +40,7 @@ export default function MarketplacePaymentCancel() {
       <Button
         variant="secondary"
         className="w-full"
-        onClick={() => router.push(`/marketplace/${router.query?.id}`)}
+        onClick={() => router.push(`/marketplace/${id}`)} // ✅ FIX
       >
         Retour au produit →
       </Button>
