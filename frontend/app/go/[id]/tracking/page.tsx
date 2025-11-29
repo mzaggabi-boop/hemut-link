@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Button from "@/components/Button";
 import MapRoute from "@/components/MapRoute";
-import { getRouteInfo } from "@/services/MapboxRouteService";
-import type { LatLng } from "@/services/MapboxRouteService";
+import { getRouteInfo, type LatLng } from "@/services/MapboxRouteService";
 
 export default function TrackingPage() {
   const { id } = useParams();
@@ -13,20 +12,28 @@ export default function TrackingPage() {
   const [start, setStart] = useState<LatLng | null>(null);
   const [end, setEnd] = useState<LatLng | null>(null);
   const [route, setRoute] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
-    // ICI : appelle ton service Mapbox correctement
-    getRouteInfo(Number(id))
+    // 👉 ⚠️ CORRECTION : getRouteInfo attend 2 LatLng !
+    // Ici on utilise des coordonnées temporaires en attendant tes vraies valeurs venant du backend.
+    const startTmp: LatLng = { lat: 48.8566, lng: 2.3522 }; // Paris
+    const endTmp: LatLng = { lat: 48.8606, lng: 2.3376 };   // Louvre
+
+    getRouteInfo(startTmp, endTmp)
       .then((result) => {
         if (!result) return;
 
-        setStart(result.start);
-        setEnd(result.end);
-        setRoute(result.route);
+        setStart(startTmp);
+        setEnd(endTmp);
+        setRoute(result);
       })
-      .catch((err) => console.error("Mapbox error:", err));
+      .catch((err) => {
+        console.error("Mapbox error:", err);
+        setError("Erreur lors du chargement du trajet.");
+      });
   }, [id]);
 
   return (
@@ -37,6 +44,8 @@ export default function TrackingPage() {
 
       <h1 className="text-xl font-semibold">Suivi du trajet</h1>
 
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
       {start && end ? (
         <MapRoute start={start} end={end} route={route} />
       ) : (
@@ -45,4 +54,3 @@ export default function TrackingPage() {
     </div>
   );
 }
-
