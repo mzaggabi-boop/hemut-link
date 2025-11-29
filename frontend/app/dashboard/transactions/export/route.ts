@@ -67,7 +67,7 @@ export async function GET(
     const net = brut - commission;
 
     rows.push([
-      p.id,
+     String(p.id),
       new Date(p.createdAt).toLocaleString("fr-FR"),
       type,
       label,
