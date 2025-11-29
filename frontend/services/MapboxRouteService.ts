@@ -1,68 +1,29 @@
-"use client";
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Button from "@/components/Button";
-import MapRoute from "@/components/MapRoute";
-import { getRouteInfo, LatLng } from "@/services/MapboxRouteService";
+export async function getDrivingRoute(start: LatLng, end: LatLng) {
+  const accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-export default function TrackingPage() {
-  const { id } = useParams();
+  if (!accessToken) {
+    throw new Error("NEXT_PUBLIC_MAPBOX_TOKEN manquant.");
+  }
 
-  const [route, setRoute] = useState<any>(null);
+  const coords = `${start.lng},${start.lat};${end.lng},${end.lat}`;
+  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&access_token=${accessToken}`;
 
-  // Positions de départ / arrivée de la mission GO
-  const [start, setStart] = useState<LatLng | null>(null);
-  const [end, setEnd] = useState<LatLng | null>(null);
+  const response = await fetch(url);
 
-  useEffect(() => {
-    if (!id) return;
+  if (!response.ok) {
+    throw new Error(`Mapbox API error: ${response.status}`);
+  }
 
-    // 1. Charger les infos de la mission GO
-    async function loadJob() {
-      const res = await fetch(`/api/go/${id}`);
-      const data = await res.json();
+  const data = await response.json();
 
-      if (!res.ok) {
-        console.error("Erreur chargement mission :", data);
-        return;
-      }
+  return data.routes?.[0] ?? null;
+}
 
-      const startPos: LatLng = {
-        lat: data.startLat,
-        lng: data.startLng,
-      };
-
-      const endPos: LatLng = {
-        lat: data.endLat,
-        lng: data.endLng,
-      };
-
-      setStart(startPos);
-      setEnd(endPos);
-
-      // 2. Charger l’itinéraire Mapbox
-      getRouteInfo(startPos, endPos)
-        .then((r) => setRoute(r))
-        .catch((err) => console.error("Mapbox error:", err));
-    }
-
-    loadJob();
-  }, [id]);
-
-  return (
-    <div className="p-6 space-y-4">
-      <Button variant="secondary" onClick={() => history.back()}>
-        ← Retour
-      </Button>
-
-      <h1 className="text-xl font-semibold">Suivi du trajet</h1>
-
-      {start && end ? (
-        <MapRoute start={start} end={end} route={route} />
-      ) : (
-        <p className="text-sm text-gray-500">Chargement du parcours…</p>
-      )}
-    </div>
-  );
+export async function getRouteInfo(start: LatLng, end: LatLng) {
+  return getDrivingRoute(start, end);
 }
