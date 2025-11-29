@@ -1,12 +1,15 @@
-// CODE XLSX � COLLER
+// CODE XLSX À COLLER
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 import ExcelJS from "exceljs";
 
 export async function GET() {
-  const supabase = supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await supabaseServer();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return new NextResponse("Non authentifié", { status: 401 });
@@ -26,9 +29,7 @@ export async function GET() {
       sender: true,
       order: {
         include: {
-          items: {
-            include: { product: true },
-          },
+          items: { include: { product: true } },
         },
       },
       job: true,
@@ -36,14 +37,10 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
-  // 📘 Création du document Excel
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Hemut-link";
   workbook.created = new Date();
 
-  // ================================
-  // FEUILLE 1 — TRANSACTIONS
-  // ================================
   const sheet = workbook.addWorksheet("Transactions");
 
   sheet.columns = [
@@ -76,9 +73,6 @@ export async function GET() {
     });
   });
 
-  // ================================
-  // FEUILLE 2 — STATISTIQUES
-  // ================================
   const stats = workbook.addWorksheet("Statistiques");
 
   const totalBrut = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -91,11 +85,11 @@ export async function GET() {
   stats.addRow(["Total net reçu", `${totalNet} €`]);
   stats.addRow(["Nombre de transactions", payments.length]);
 
-  // ================================
-  // EXPORT BUFFER
-  // ================================
   const bufferData = await workbook.xlsx.writeBuffer();
-  const buffer = bufferData instanceof Uint8Array ? bufferData : new Uint8Array(bufferData as ArrayBuffer);
+  const buffer =
+    bufferData instanceof Uint8Array
+      ? bufferData
+      : new Uint8Array(bufferData as ArrayBuffer);
 
   return new NextResponse(buffer, {
     status: 200,
