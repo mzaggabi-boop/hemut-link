@@ -6,10 +6,13 @@ import mapboxgl from "mapbox-gl";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
+// Types stricts pour Mapbox
 interface MapRouteProps {
   start: { lat: number; lng: number };
   end: { lat: number; lng: number };
-  route?: { geometry: any } | null;
+  route?: {
+    geometry: GeoJSON.LineString;  // ✅ format strict
+  } | null;
   userPosition?: { lat: number; lng: number } | null;
 }
 
@@ -28,24 +31,30 @@ export default function MapRoute({ start, end, route, userPosition }: MapRoutePr
       zoom: 11,
     });
 
-    // Départ (vert)
+    // --- Markers départ et arrivée ---
     new mapboxgl.Marker({ color: "#22c55e" })
       .setLngLat([start.lng, start.lat])
       .addTo(map);
 
-    // Arrivée (rouge)
     new mapboxgl.Marker({ color: "#ef4444" })
       .setLngLat([end.lng, end.lat])
       .addTo(map);
 
-    if (route?.geometry) {
-      map.on("load", () => {
+    // --- Ajout de l’itinéraire ---
+    map.on("load", () => {
+      if (route?.geometry) {
+        // Clean source si elle existe déjà
+        if (map.getSource("route")) {
+          map.removeLayer("route-line");
+          map.removeSource("route");
+        }
+
         map.addSource("route", {
           type: "geojson",
           data: {
             type: "Feature",
-            properties: {},          // ✅ FIX : obligatoire
-            geometry: route.geometry // geometry valide
+            geometry: route.geometry,
+            properties: {}, // obligatoire
           },
         });
 
@@ -58,12 +67,15 @@ export default function MapRoute({ start, end, route, userPosition }: MapRoutePr
             "line-color": "#fbbf24",
           },
         });
-      });
-    }
+      }
+    });
 
     mapInstance.current = map;
 
     return () => {
+      // --- Nettoyage complet ---
+      if (map.getLayer("route-line")) map.removeLayer("route-line");
+      if (map.getSource("route")) map.removeSource("route");
       map.remove();
     };
   }, [start.lat, start.lng, end.lat, end.lng, route]);
@@ -88,3 +100,4 @@ export default function MapRoute({ start, end, route, userPosition }: MapRoutePr
     />
   );
 }
+
