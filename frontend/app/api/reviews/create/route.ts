@@ -22,8 +22,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // AUTH
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -41,7 +41,6 @@ export async function POST(req: Request) {
         { status: 404 }
       );
 
-    // CRÉER AVIS
     await prisma.review.create({
       data: {
         artisanId,
@@ -60,4 +59,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
