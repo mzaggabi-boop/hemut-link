@@ -10,8 +10,8 @@ import { getRouteInfo, type LatLng } from "@/services/MapboxRouteService";
 export default function TrackingPage() {
   const { id } = useParams();
 
-  const [start, setStart] = useState<[number, number] | null>(null);
-  const [end, setEnd] = useState<[number, number] | null>(null);
+  const [start, setStart] = useState<{ lat: number; lng: number } | null>(null);
+  const [end, setEnd] = useState<{ lat: number; lng: number } | null>(null);
   const [route, setRoute] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +28,8 @@ export default function TrackingPage() {
           return;
         }
 
-        setStart([startPoint.lng, startPoint.lat]);
-        setEnd([endPoint.lng, endPoint.lat]);
+        setStart({ lat: startPoint.lat, lng: startPoint.lng });
+        setEnd({ lat: endPoint.lat, lng: endPoint.lng });
         setRoute(result);
       })
       .catch(() => setError("Erreur lors du chargement du trajet."));
@@ -45,7 +45,7 @@ export default function TrackingPage() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      {start && end ? (
+      {start && end && route ? (
         <MapRoute start={start} end={end} route={route} />
       ) : (
         <p className="text-sm text-gray-500">Chargement du parcours…</p>
@@ -53,5 +53,3 @@ export default function TrackingPage() {
     </div>
   );
 }
-
-
