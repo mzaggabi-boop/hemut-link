@@ -1,4 +1,3 @@
-// UPDATE PROFILE API - CODE � COLLER
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
@@ -7,7 +6,8 @@ export async function PATCH(req: Request) {
   try {
     const body = await req.json();
 
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -27,7 +27,6 @@ export async function PATCH(req: Request) {
       );
     }
 
-    // --- VALIDATION ---
     if (body.siret && body.siret.length < 9) {
       return NextResponse.json(
         { error: "Le SIRET est invalide." },
@@ -35,7 +34,6 @@ export async function PATCH(req: Request) {
       );
     }
 
-    // --- UPDATE USER ----
     await prisma.user.update({
       where: { id: dbUser.id },
       data: {
@@ -44,7 +42,6 @@ export async function PATCH(req: Request) {
       },
     });
 
-    // --- UPDATE BUSINESS PROFILE ---
     const existing = await prisma.businessProfile.findUnique({
       where: { userId: dbUser.id },
     });
@@ -84,4 +81,3 @@ export async function PATCH(req: Request) {
     );
   }
 }
-
