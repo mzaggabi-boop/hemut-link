@@ -19,8 +19,11 @@ export async function POST(
       );
     }
 
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await supabaseServer();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json(
@@ -40,7 +43,6 @@ export async function POST(
       );
     }
 
-    // Accepter la mission
     await prisma.goJob.update({
       where: { id: jobId },
       data: {
@@ -53,7 +55,6 @@ export async function POST(
       { success: true, message: "Mission acceptée." },
       { status: 200 }
     );
-
   } catch (err) {
     console.error("GO ACCEPT ERROR:", err);
     return NextResponse.json(
