@@ -14,7 +14,10 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!id) return;
 
-    getRouteInfo(Number(id)).then((r) => setRoute(r));
+    // ✔️ CORRECTION : getRouteInfo demande 2 arguments
+    getRouteInfo(Number(id), "tracking")
+      .then((result) => setRoute(result))
+      .catch((err) => console.error("Mapbox error:", err));
   }, [id]);
 
   return (
@@ -25,8 +28,12 @@ export default function TrackingPage() {
 
       <h1 className="text-xl font-semibold">Suivi du trajet</h1>
 
-      <MapRoute start={route?.start} end={route?.end} />
+      {/* Display only when route OK */}
+      {route ? (
+        <MapRoute start={route.start} end={route.end} />
+      ) : (
+        <p className="text-gray-500 text-sm">Chargement du trajet…</p>
+      )}
     </div>
   );
 }
-
