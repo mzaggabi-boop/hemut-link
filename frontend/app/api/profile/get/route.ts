@@ -4,7 +4,8 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 export async function GET() {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -19,7 +20,10 @@ export async function GET() {
     });
 
     if (!dbUser) {
-      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur introuvable" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
@@ -30,7 +34,10 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET PROFILE ERROR", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur serveur" },
+      { status: 500 }
+    );
   }
 }
 
