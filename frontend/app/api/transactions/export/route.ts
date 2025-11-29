@@ -4,7 +4,8 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 export async function GET() {
   try {
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -23,10 +24,7 @@ export async function GET() {
 
     const transactions = await prisma.payment.findMany({
       where: {
-        OR: [
-          { senderId: dbUser.id },
-          { receiverId: dbUser.id },
-        ],
+        OR: [{ senderId: dbUser.id }, { receiverId: dbUser.id }],
       },
       orderBy: { createdAt: "desc" },
     });
@@ -75,4 +73,3 @@ export async function GET() {
     return new NextResponse("Erreur serveur", { status: 500 });
   }
 }
-
