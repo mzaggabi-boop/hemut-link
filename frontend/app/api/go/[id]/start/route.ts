@@ -14,7 +14,8 @@ export async function POST(
       return NextResponse.json({ error: "ID invalide" }, { status: 400 });
     }
 
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -28,7 +29,10 @@ export async function POST(
     });
 
     if (!dbUser) {
-      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Utilisateur introuvable" },
+        { status: 404 }
+      );
     }
 
     const job = await prisma.goJob.findUnique({
@@ -36,7 +40,10 @@ export async function POST(
     });
 
     if (!job) {
-      return NextResponse.json({ error: "Mission introuvable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Mission introuvable" },
+        { status: 404 }
+      );
     }
 
     if (job.artisanId !== dbUser.id) {
@@ -54,6 +61,9 @@ export async function POST(
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("START JOB ERROR:", err);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur serveur" },
+      { status: 500 }
+    );
   }
 }
