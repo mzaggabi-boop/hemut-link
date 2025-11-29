@@ -1,4 +1,3 @@
-// app/components/MapRoute.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -6,9 +5,19 @@ import mapboxgl from "mapbox-gl";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
+// Autoriser start/end au format tableau OU objet
+type LL = { lat: number; lng: number } | [number, number];
+
+function normalize(p: LL): { lat: number; lng: number } {
+  if (Array.isArray(p)) {
+    return { lng: p[0], lat: p[1] }; // Mapbox: [lng, lat]
+  }
+  return p;
+}
+
 interface MapRouteProps {
-  start: { lat: number; lng: number };
-  end: { lat: number; lng: number };
+  start: LL;
+  end: LL;
   route?: { geometry: any } | null;
   userPosition?: { lat: number; lng: number } | null;
 }
@@ -18,26 +27,31 @@ export default function MapRoute({ start, end, route, userPosition }: MapRoutePr
   const mapInstance = useRef<mapboxgl.Map | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
+  // Normalisation des coordonnées
+  const s = normalize(start);
+  const e = normalize(end);
+
   useEffect(() => {
     if (!mapContainer.current) return;
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/dark-v11",
-      center: [start.lng, start.lat],
+      center: [s.lng, s.lat],
       zoom: 11,
     });
 
-    // Départ (vert)
+    // Départ
     new mapboxgl.Marker({ color: "#22c55e" })
-      .setLngLat([start.lng, start.lat])
+      .setLngLat([s.lng, s.lat])
       .addTo(map);
 
-    // Arrivée (rouge)
+    // Arrivée
     new mapboxgl.Marker({ color: "#ef4444" })
-      .setLngLat([end.lng, end.lat])
+      .setLngLat([e.lng, e.lat])
       .addTo(map);
 
+    // Tracé itinéraire
     if (route?.geometry) {
       map.on("load", () => {
         map.addSource("route", {
@@ -62,12 +76,10 @@ export default function MapRoute({ start, end, route, userPosition }: MapRoutePr
 
     mapInstance.current = map;
 
-    return () => {
-      map.remove();
-    };
-  }, [start.lat, start.lng, end.lat, end.lng, route]);
+    return () => map.remove();
+  }, [s.lat, s.lng, e.lat, e.lng, route]);
 
-  // Marker artisan en live
+  // Position artisan en live
   useEffect(() => {
     if (!mapInstance.current || !userPosition) return;
 
@@ -87,4 +99,3 @@ export default function MapRoute({ start, end, route, userPosition }: MapRoutePr
     />
   );
 }
-
