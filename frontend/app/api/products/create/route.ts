@@ -7,7 +7,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { title, price, condition, description, categoryId, photos, tags } = body;
 
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -54,7 +55,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // GESTION DES TAGS
     if (tags && Array.isArray(tags) && tags.length > 0) {
       const createdTags = await Promise.all(
         tags.map((name: string) =>
@@ -84,4 +84,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
