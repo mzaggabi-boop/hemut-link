@@ -5,8 +5,11 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 export async function GET(_req: NextRequest) {
   try {
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await supabaseServer();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json(
@@ -33,7 +36,6 @@ export async function GET(_req: NextRequest) {
       companyName: dbUser.companyName,
       businessProfile: dbUser.businessProfile,
     });
-
   } catch (error) {
     console.error("GET PROFILE ERROR:", error);
     return NextResponse.json(
@@ -42,4 +44,3 @@ export async function GET(_req: NextRequest) {
     );
   }
 }
-
