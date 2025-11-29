@@ -3,11 +3,9 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 import { notifyMarketplaceOrderCreated } from "@/lib/notifications";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import stripe from "@/lib/stripe"; // ✔ FIX Stripe
 
 export async function POST(req: Request) {
   try {
