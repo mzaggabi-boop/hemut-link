@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 // 🔥 IMPORT MANQUANT — obligatoire !
-import DocUploader from "@/components/DocUploader";
+import DocUploader from "./../components/DocUploader";
+
 
 export default function EditProfilePage() {
   const router = useRouter();
