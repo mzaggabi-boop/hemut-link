@@ -7,12 +7,12 @@ import {
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }  // ✅ "id" pas "jobId"
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;  // ✅ "id" pas "jobId"
+    const { id } = await params;
     const jobId = Number(id);
-    
+
     if (Number.isNaN(jobId)) {
       return NextResponse.json(
         { error: "ID mission non valide." },
