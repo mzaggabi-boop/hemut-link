@@ -5,26 +5,26 @@ import { useParams } from "next/navigation";
 import Button from "@/components/Button";
 import MapRoute from "@/components/MapRoute";
 import { getRouteInfo } from "@/services/MapboxRouteService";
-
 import type { LatLng } from "@/services/MapboxRouteService";
 
 export default function TrackingPage() {
   const { id } = useParams();
 
-  const [start, setStart] = useState<[number, number] | null>(null);
-  const [end, setEnd] = useState<[number, number] | null>(null);
+  const [start, setStart] = useState<LatLng | null>(null);
+  const [end, setEnd] = useState<LatLng | null>(null);
+  const [route, setRoute] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
 
-    // Temp: coordonnées fictives
-    const dummyStart: LatLng = { lat: 48.8566, lng: 2.3522 }; // Paris
-    const dummyEnd: LatLng = { lat: 48.8606, lng: 2.3376 }; // Louvre
+    // ICI : appelle ton service Mapbox correctement
+    getRouteInfo(Number(id))
+      .then((result) => {
+        if (!result) return;
 
-    getRouteInfo(dummyStart, dummyEnd)
-      .then(() => {
-        setStart([dummyStart.lng, dummyStart.lat]);
-        setEnd([dummyEnd.lng, dummyEnd.lat]);
+        setStart(result.start);
+        setEnd(result.end);
+        setRoute(result.route);
       })
       .catch((err) => console.error("Mapbox error:", err));
   }, [id]);
@@ -38,10 +38,11 @@ export default function TrackingPage() {
       <h1 className="text-xl font-semibold">Suivi du trajet</h1>
 
       {start && end ? (
-        <MapRoute start={start} end={end} />
+        <MapRoute start={start} end={end} route={route} />
       ) : (
         <p className="text-sm text-gray-500">Chargement du parcours…</p>
       )}
     </div>
   );
 }
+
