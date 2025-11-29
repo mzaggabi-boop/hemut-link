@@ -43,7 +43,8 @@ export async function GET(
       return new Response("ID de commande invalide", { status: 400 });
     }
 
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -90,17 +91,14 @@ export async function GET(
       return new Response("Accès interdit à cette facture", { status: 403 });
     }
 
-    // PDF DOCUMENT
     const doc = new PDFDocument({ size: "A4", margin: 40 });
 
-    // HEADER
     doc.fontSize(20).text("Hemut-link");
     doc.moveDown(1);
     doc.fontSize(12).text(`Facture n° FACT-${order.id}`);
     doc.text(`Date : ${new Date(order.createdAt).toLocaleDateString("fr-FR")}`);
     doc.moveDown(2);
 
-    // SELLER
     doc.fontSize(12).text("Vendeur :", { underline: true });
     if (sellerUser) {
       const sellerName =
@@ -116,7 +114,6 @@ export async function GET(
 
     doc.moveDown();
 
-    // BUYER
     doc.text("Client :", { underline: true });
     const buyerName =
       `${order.buyer.firstname || ""} ${order.buyer.lastname || ""}`.trim() ||
@@ -126,7 +123,6 @@ export async function GET(
     if (order.buyer.email) doc.text(order.buyer.email);
     doc.moveDown(2);
 
-    // TABLE
     doc.fontSize(11).text("Détail de la commande :", { underline: true });
     doc.moveDown();
 
@@ -182,10 +178,8 @@ export async function GET(
       "Document généré automatiquement par Hemut-link. Cette facture est valable sans signature."
     );
 
-    // → CONVERSION PDF → ARRAYBUFFER
     const arrayBuffer = await pdfToArrayBuffer(doc);
 
-    // → RESPONSE COMPATIBLE NEXT 16
     return new Response(arrayBuffer, {
       status: 200,
       headers: {
