@@ -4,14 +4,12 @@ import { redirect } from "next/navigation";
 
 function renderStars(value: number) {
   const full = Math.round(value);
-  return (
-    "★★★★★☆☆☆☆☆".slice(5 - full, 10 - full)
-  );
+  return "★★★★★☆☆☆☆☆".slice(5 - full, 10 - full);
 }
 
 export default async function DashboardProfilePage() {
   // AUTH
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -43,9 +41,7 @@ export default async function DashboardProfilePage() {
           Mon Profil Professionnel
         </h1>
 
-        <p className="text-sm text-gray-600">
-          Email : {dbUser.email}
-        </p>
+        <p className="text-sm text-gray-600">Email : {dbUser.email}</p>
 
         {/* NOTE MOYENNE */}
         <div className="pt-4 border-t border-dashed space-y-1">
@@ -53,20 +49,26 @@ export default async function DashboardProfilePage() {
 
           {rating > 0 ? (
             <div className="flex items-center gap-2">
-              <span className="text-lg text-yellow-500">{renderStars(rating)}</span>
+              <span className="text-lg text-yellow-500">
+                {renderStars(rating)}
+              </span>
               <span className="text-sm font-semibold text-gray-900">
                 {rating.toFixed(1)} / 5
               </span>
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">Aucun avis pour le moment.</p>
+            <p className="text-sm text-gray-500 italic">
+              Aucun avis pour le moment.
+            </p>
           )}
         </div>
       </section>
 
       {/* INFORMATIONS ENTREPRISE */}
       <section className="bg-white border rounded-xl shadow-sm p-6 space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900">Informations professionnelles</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          Informations professionnelles
+        </h2>
 
         <div className="space-y-2 text-sm text-gray-700">
           <p>
@@ -95,14 +97,18 @@ export default async function DashboardProfilePage() {
               {profile.description}
             </p>
           ) : (
-            <p className="text-sm text-gray-500 italic">Aucune description fournie.</p>
+            <p className="text-sm text-gray-500 italic">
+              Aucune description fournie.
+            </p>
           )}
         </div>
       </section>
 
       {/* DOCUMENTS */}
       <section className="bg-white border rounded-xl shadow-sm p-6 space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900">Documents & Certifications</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          Documents & Certifications
+        </h2>
 
         <div className="space-y-3 text-sm">
           <div>
@@ -110,7 +116,9 @@ export default async function DashboardProfilePage() {
             {profile?.certifications ? (
               <p className="text-gray-700">{profile.certifications}</p>
             ) : (
-              <p className="text-gray-500 italic">Aucune certification déclarée.</p>
+              <p className="text-gray-500 italic">
+                Aucune certification déclarée.
+              </p>
             )}
           </div>
 
@@ -136,7 +144,9 @@ export default async function DashboardProfilePage() {
         <h2 className="text-lg font-semibold text-gray-900">Avis reçus</h2>
 
         {reviews.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">Aucun avis pour le moment.</p>
+          <p className="text-sm text-gray-500 italic">
+            Aucun avis pour le moment.
+          </p>
         ) : (
           <div className="space-y-4">
             {reviews.map((r) => (
@@ -175,4 +185,3 @@ export default async function DashboardProfilePage() {
     </main>
   );
 }
-
