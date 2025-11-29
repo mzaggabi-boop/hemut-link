@@ -26,7 +26,9 @@ function statusLabel(status: string | null) {
 }
 
 export default async function MyMarketplaceOrdersPage() {
-  const supabase = supabaseServer();
+  // ✅ Correction : attendre supabaseServer()
+  const supabase = await supabaseServer();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -91,7 +93,6 @@ export default async function MyMarketplaceOrdersPage() {
         </div>
       </header>
 
-      {/* Aucune commande */}
       {orders.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
           Vous n’avez encore passé aucune commande sur la marketplace.
