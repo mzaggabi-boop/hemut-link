@@ -17,9 +17,9 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!id) return;
 
-    // 🔥 TEMPORAIRE – À remplacer par un vrai trajet venant de ta DB
-    const fakeStart: LatLng = { lat: 48.8566, lng: 2.3522 };  // Paris
-    const fakeEnd: LatLng = { lat: 48.8666, lng: 2.3350 };    // Paris (2 km)
+    // Coordonnées temporaires
+    const fakeStart: LatLng = { lat: 48.8566, lng: 2.3522 };
+    const fakeEnd: LatLng = { lat: 48.8666, lng: 2.3350 };
 
     getRouteInfo(fakeStart, fakeEnd)
       .then((routeData) => {
@@ -49,7 +49,11 @@ export default function TrackingPage() {
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       {start && end ? (
-        <MapRoute start={start} end={end} route={route} />
+        <MapRoute
+          start={{ lat: start.lat, lng: start.lng }}
+          end={{ lat: end.lat, lng: end.lng }}
+          route={route}
+        />
       ) : (
         <p className="text-sm text-gray-500">Chargement du parcours…</p>
       )}
