@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Button from "@/components/Button";
 import MapRoute from "@/components/MapRoute";
-import { getRouteInfo } from "@/services/MapboxRouteService";
-import type { LatLng } from "@/services/MapboxRouteService";
+import { getRouteInfo, type LatLng } from "@/services/MapboxRouteService";
 
 export default function TrackingPage() {
   const { id } = useParams();
@@ -18,26 +17,26 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!id) return;
 
-    getRouteInfo(Number(id))
-      .then((result) => {
-        if (!result) {
+    // 🔥 TEMPORAIRE – À remplacer par un vrai trajet venant de ta DB
+    const fakeStart: LatLng = { lat: 48.8566, lng: 2.3522 };  // Paris
+    const fakeEnd: LatLng = { lat: 48.8666, lng: 2.3350 };    // Paris (2 km)
+
+    getRouteInfo(fakeStart, fakeEnd)
+      .then((routeData) => {
+        if (!routeData) {
           setError("Impossible de récupérer l'itinéraire.");
           return;
         }
 
-        setStart(result.start);
-        setEnd(result.end);
-        setRoute(result.route);
+        setStart(fakeStart);
+        setEnd(fakeEnd);
+        setRoute(routeData);
       })
       .catch((err) => {
         console.error("Mapbox error:", err);
         setError("Erreur lors du chargement du trajet.");
       });
   }, [id]);
-
-  // Mapbox requiert des tableaux [lng, lat]
-  const startArray = start ? ([start.lng, start.lat] as [number, number]) : null;
-  const endArray = end ? ([end.lng, end.lat] as [number, number]) : null;
 
   return (
     <div className="p-6 space-y-4">
@@ -49,8 +48,8 @@ export default function TrackingPage() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      {startArray && endArray ? (
-        <MapRoute start={startArray} end={endArray} route={route} />
+      {start && end ? (
+        <MapRoute start={start} end={end} route={route} />
       ) : (
         <p className="text-sm text-gray-500">Chargement du parcours…</p>
       )}
