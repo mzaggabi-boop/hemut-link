@@ -5,7 +5,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2023-10-16" as any
 });
 
 export async function POST(
@@ -77,9 +77,6 @@ export async function POST(
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("PAY ERROR:", err);
-    return NextResponse.json(
-      { error: "Erreur serveur." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }
