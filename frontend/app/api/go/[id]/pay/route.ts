@@ -5,15 +5,15 @@ import { supabaseServer } from "@/lib/supabase-server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16"
+  apiVersion: "2023-10-16",
 });
 
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const jobId = Number(id);
 
     if (Number.isNaN(jobId)) {
@@ -83,4 +83,3 @@ export async function POST(
     );
   }
 }
-
