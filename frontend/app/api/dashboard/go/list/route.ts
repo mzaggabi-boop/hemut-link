@@ -6,14 +6,20 @@ import { supabaseServer } from "@/lib/supabase-server";
 export async function GET() {
   try {
     // AUTH
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await supabaseServer(); // ✅ FIX : attendre le client Supabase
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError) {
+      console.error("Supabase auth error:", authError);
+      return NextResponse.json({ error: "Erreur d'authentification." }, { status: 401 });
+    }
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Non authentifié." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -21,10 +27,7 @@ export async function GET() {
     });
 
     if (!dbUser) {
-      return NextResponse.json(
-        { error: "Utilisateur introuvable." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
     }
 
     const artisanId = dbUser.id;
@@ -41,9 +44,9 @@ export async function GET() {
     });
 
     // CLASSEMENT
-    const waiting = jobs.filter(j => j.status === "ACCEPTED");
-    const inProgress = jobs.filter(j => j.status === "IN_PROGRESS");
-    const completed = jobs.filter(j => j.status === "COMPLETED");
+    const waiting = jobs.filter((j) => j.status === "ACCEPTED");
+    const inProgress = jobs.filter((j) => j.status === "IN_PROGRESS");
+    const completed = jobs.filter((j) => j.status === "COMPLETED");
 
     // STATISTIQUES GLOBALES
     const totalEarned = completed.reduce((sum, job) => {
@@ -63,7 +66,10 @@ export async function GET() {
       const date = new Date(job.createdAt);
       if (isNaN(date.getTime())) return;
 
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}`;
 
       missionsByMonth[key] = (missionsByMonth[key] || 0) + 1;
 
@@ -75,7 +81,7 @@ export async function GET() {
     });
 
     // FORMAT GRAPH
-    const graphData = Object.keys(missionsByMonth).map(key => ({
+    const graphData = Object.keys(missionsByMonth).map((key) => ({
       month: key,
       missions: missionsByMonth[key] || 0,
       revenue: revenueByMonth[key] || 0,
@@ -92,10 +98,6 @@ export async function GET() {
     });
   } catch (err) {
     console.error("API GO DASHBOARD ERROR :", err);
-    return NextResponse.json(
-      { error: "Erreur serveur." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }
-
