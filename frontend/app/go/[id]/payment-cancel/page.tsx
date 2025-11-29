@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import Button from "../../../../components/Button";
 
-export default function PaymentCancelPage() {
+export default function PaymentCancelPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const router = useRouter();
 
   return (
@@ -19,7 +23,7 @@ export default function PaymentCancelPage() {
 
       <div className="bg-neutral-900 border border-red-500/40 rounded-xl p-4 mt-4">
         <p className="text-neutral-400 text-sm">
-          Aucune somme n’a été prélevée.  
+          Aucune somme n’a été prélevée.
           Vous pouvez recommencer la procédure en toute sécurité.
         </p>
       </div>
@@ -27,7 +31,7 @@ export default function PaymentCancelPage() {
       <Button
         variant="primary"
         className="w-full"
-        onClick={() => router.push(`/go/${router.params?.id}/pay`)}
+        onClick={() => router.push(`/go/${params.id}/pay`)}
       >
         Réessayer le paiement →
       </Button>
@@ -35,10 +39,11 @@ export default function PaymentCancelPage() {
       <Button
         variant="secondary"
         className="w-full"
-        onClick={() => router.push(`/go/${router.params?.id}`)}
+        onClick={() => router.push(`/go/${params.id}`)}
       >
         Retour à la mission →
       </Button>
     </div>
   );
 }
+
