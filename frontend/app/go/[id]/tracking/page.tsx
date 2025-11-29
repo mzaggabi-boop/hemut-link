@@ -13,26 +13,18 @@ export default function TrackingPage() {
 
   const [start, setStart] = useState<[number, number] | null>(null);
   const [end, setEnd] = useState<[number, number] | null>(null);
-  const [route, setRoute] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
 
-    // Comme getRouteInfo demande 2 LatLng on mock une position temporaire
-    // → Ce sera remplacé plus tard par les vraies coordonnées en DB
+    // Temp: coordonnées fictives
     const dummyStart: LatLng = { lat: 48.8566, lng: 2.3522 }; // Paris
     const dummyEnd: LatLng = { lat: 48.8606, lng: 2.3376 }; // Louvre
 
     getRouteInfo(dummyStart, dummyEnd)
-      .then((result) => {
-        if (!result) return;
-
-        const startPoint = dummyStart;
-        const endPoint = dummyEnd;
-
-        setStart([startPoint.lng, startPoint.lat]);
-        setEnd([endPoint.lng, endPoint.lat]);
-        setRoute(result);
+      .then(() => {
+        setStart([dummyStart.lng, dummyStart.lat]);
+        setEnd([dummyEnd.lng, dummyEnd.lat]);
       })
       .catch((err) => console.error("Mapbox error:", err));
   }, [id]);
@@ -46,11 +38,10 @@ export default function TrackingPage() {
       <h1 className="text-xl font-semibold">Suivi du trajet</h1>
 
       {start && end ? (
-        <MapRoute start={start} end={end} route={route} />
+        <MapRoute start={start} end={end} />
       ) : (
         <p className="text-sm text-gray-500">Chargement du parcours…</p>
       )}
     </div>
   );
 }
-
