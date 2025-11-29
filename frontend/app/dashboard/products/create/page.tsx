@@ -1,9 +1,13 @@
-// CODE CREATE PAGE - A REMPLACER
 // app/dashboard/products/create/page.tsx
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import prisma from "@/lib/prisma";
 import ProductCreateForm from "./ProductCreateForm";
 
 export default async function CreateProductPage() {
+  // Impossible en SSG → doit être exécuté au runtime
   const categories = await prisma.marketplaceCategory.findMany({
     orderBy: { name: "asc" },
   });
