@@ -16,9 +16,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // AUTH
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    // AUTH FIX
+    const supabase = await supabaseServer();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user)
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -73,7 +76,7 @@ export async function POST(req: Request) {
               name: order.product.title,
               description: "Achat marketplace Hemut-link",
             },
-            unit_amount: order.total * 100, // montant final en centimes
+            unit_amount: order.total * 100,
           },
           quantity: 1,
         },
@@ -103,4 +106,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
