@@ -15,9 +15,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // AUTH
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    // AUTH FIX
+    const supabase = await supabaseServer();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -60,7 +63,7 @@ export async function POST(req: Request) {
         buyerId: buyer.id,
         sellerId: product.sellerId,
         productId: product.id,
-        total: Math.round(product.price), // € → integer
+        total: Math.round(product.price),
         status: "pending",
       },
     });
