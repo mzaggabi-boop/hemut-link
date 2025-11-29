@@ -54,8 +54,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // AUTH
-    const supabase = supabaseServer();
+    // AUTH FIX
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -111,34 +112,28 @@ export async function POST(req: Request) {
     // ============================================================
 
     if (geo) {
-      const radiusKm = 10; // rayon configurable
+      const radiusKm = 10;
 
       const artisans = await prisma.user.findMany({
         where: {
           role: "ARTISAN",
-          // exclut le client
           NOT: { id: dbUser.id },
         },
         include: { businessProfile: true },
         take: 200,
       });
 
-      const nearby = artisans.filter(
-        (artisan) =>
-          artisan.businessProfile &&
-          artisan.businessProfile.zones && // zone = lat,lon ?
-          (() => {
-            const [latStr, lonStr] =
-              artisan.businessProfile.zones.split(",") || [];
-            const lat = parseFloat(latStr);
-            const lon = parseFloat(lonStr);
-            if (isNaN(lat) || isNaN(lon)) return false;
-            const d = haversine(geo.lat, geo.lon, lat, lon);
-            return d <= radiusKm;
-          })()
-      );
+      const nearby = artisans.filter((artisan) => {
+        if (!artisan.businessProfile?.zones) return false;
+        const [latStr, lonStr] = artisan.businessProfile.zones.split(",") || [];
+        const lat = parseFloat(latStr);
+        const lon = parseFloat(lonStr);
+        if (isNaN(lat) || isNaN(lon)) return false;
+        const d = haversine(geo.lat, geo.lon, lat, lon);
+        return d <= radiusKm;
+      });
 
-      // 🔔 Création notification interne
+      // 🔔 Notifs internes
       for (const art of nearby) {
         await prisma.notification.create({
           data: {
@@ -149,20 +144,14 @@ export async function POST(req: Request) {
         });
       }
 
-      // ============================================================
-      // 🟣 D2 — MESSAGE AUTOMATIQUE
-      // ============================================================
-
+      // 🔔 Message automatique
       for (const art of nearby) {
-        // création conversation
-        const convo = await prisma.conversation.create({
-          data: {},
-        });
+        const convo = await prisma.conversation.create({ data: {} });
 
         await prisma.message.create({
           data: {
             conversationId: convo.id,
-            senderId: dbUser.id, // client
+            senderId: dbUser.id,
             receiverId: art.id,
             content: `Bonjour, une nouvelle mission est disponible près de vous : "${title}".`,
           },
@@ -179,4 +168,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
