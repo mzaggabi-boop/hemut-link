@@ -10,15 +10,14 @@ import { getRouteInfo, type LatLng } from "@/services/MapboxRouteService";
 export default function TrackingPage() {
   const { id } = useParams();
 
-  const [start, setStart] = useState<LatLng | null>(null);
-  const [end, setEnd] = useState<LatLng | null>(null);
+  const [start, setStart] = useState<[number, number] | null>(null);
+  const [end, setEnd] = useState<[number, number] | null>(null);
   const [route, setRoute] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
-    // ⚠️ Coordonnées temporaires (OK pour tests)
     const startPoint: LatLng = { lat: 48.8566, lng: 2.3522 };
     const endPoint: LatLng = { lat: 48.8666, lng: 2.335 };
 
@@ -29,15 +28,11 @@ export default function TrackingPage() {
           return;
         }
 
-        setStart(startPoint);
-        setEnd(endPoint);
+        setStart([startPoint.lng, startPoint.lat]);
+        setEnd([endPoint.lng, endPoint.lat]);
         setRoute(result);
       })
-      .catch((err) => {
-        console.error("Mapbox error:", err);
-        setError("Erreur lors du chargement du trajet.");
-      });
-
+      .catch(() => setError("Erreur lors du chargement du trajet."));
   }, [id]);
 
   return (
@@ -50,16 +45,13 @@ export default function TrackingPage() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      {start && end && route ? (
-        <MapRoute
-          start={{ lat: start.lat, lng: start.lng }}
-          end={{ lat: end.lat, lng: end.lng }}
-          route={route}
-        />
+      {start && end ? (
+        <MapRoute start={start} end={end} route={route} />
       ) : (
         <p className="text-sm text-gray-500">Chargement du parcours…</p>
       )}
     </div>
   );
 }
+
 
