@@ -18,9 +18,9 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!id) return;
 
-    // ⚠️ ICI : COORDONNÉES TEMPORAIRES (à remplacer par les vraies)
+    // ⚠️ Points temporaires (tu remplaceras par les vrais)
     const startPoint: LatLng = { lat: 48.8566, lng: 2.3522 }; // Paris
-    const endPoint: LatLng = { lat: 48.8666, lng: 2.335 };   // Autre point à Paris
+    const endPoint: LatLng = { lat: 48.8666, lng: 2.335 };   // Paris 2
 
     getRouteInfo(startPoint, endPoint)
       .then((result) => {
@@ -50,11 +50,16 @@ export default function TrackingPage() {
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       {start && end ? (
-        <MapRoute start={start} end={end} route={route} />
+        <MapRoute
+          start={[start.lng, start.lat]}   // ✅ FIX FORMAT
+          end={[end.lng, end.lat]}         // ✅ FIX FORMAT
+          route={route}
+        />
       ) : (
         <p className="text-sm text-gray-500">Chargement du parcours…</p>
       )}
     </div>
   );
 }
+
 
