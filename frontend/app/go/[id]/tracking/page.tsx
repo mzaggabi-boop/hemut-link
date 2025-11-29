@@ -4,50 +4,33 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Button from "@/components/Button";
 import MapRoute from "@/components/MapRoute";
-import { getRouteInfo, LatLng } from "@/services/MapboxRouteService";
+import { getRouteInfo } from "@/services/MapboxRouteService";
+
+import type { LatLng } from "@/services/MapboxRouteService";
 
 export default function TrackingPage() {
   const { id } = useParams();
 
+  const [start, setStart] = useState<[number, number] | null>(null);
+  const [end, setEnd] = useState<[number, number] | null>(null);
   const [route, setRoute] = useState<any>(null);
-
-  // Positions de départ / arrivée de la mission GO
-  const [start, setStart] = useState<LatLng | null>(null);
-  const [end, setEnd] = useState<LatLng | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
-    // 1. Charger les infos de la mission GO
-    async function loadJob() {
-      const res = await fetch(`/api/go/${id}`);
-      const data = await res.json();
+    getRouteInfo(Number(id))
+      .then((result) => {
+        if (!result) return;
 
-      if (!res.ok) {
-        console.error("Erreur chargement mission :", data);
-        return;
-      }
+        // result.start/end sont en LatLng → on convertit
+        const startPoint: LatLng = result.start;
+        const endPoint: LatLng = result.end;
 
-      const startPos: LatLng = {
-        lat: data.startLat,
-        lng: data.startLng,
-      };
-
-      const endPos: LatLng = {
-        lat: data.endLat,
-        lng: data.endLng,
-      };
-
-      setStart(startPos);
-      setEnd(endPos);
-
-      // 2. Charger l’itinéraire Mapbox
-      getRouteInfo(startPos, endPos)
-        .then((r) => setRoute(r))
-        .catch((err) => console.error("Mapbox error:", err));
-    }
-
-    loadJob();
+        setStart([startPoint.lng, startPoint.lat]);
+        setEnd([endPoint.lng, endPoint.lat]);
+        setRoute(result.route);
+      })
+      .catch((err) => console.error("Mapbox error:", err));
   }, [id]);
 
   return (
@@ -66,3 +49,4 @@ export default function TrackingPage() {
     </div>
   );
 }
+
