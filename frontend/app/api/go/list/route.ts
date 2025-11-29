@@ -31,14 +31,12 @@ export async function GET(req: Request) {
       );
     }
 
-    // ☑️ On récupère les jobs non assignés, avec artisan, notes, photos
     const jobs = await prisma.goJob.findMany({
       where: {
         artisanId: null,
       },
       include: {
         photos: { take: 1 },
-        // Artisan + notes moyennes
         client: true,
         artisan: {
           include: {
@@ -50,7 +48,6 @@ export async function GET(req: Request) {
       take: 200,
     });
 
-    // Traitement distances + calcul note artisan
     const result = jobs
       .map((job) => {
         if (job.latitude == null || job.longitude == null) return null;
@@ -59,7 +56,6 @@ export async function GET(req: Request) {
 
         if (distanceKm > max) return null;
 
-        // ⭐ NOTE ARTISAN = moyenne des reviewsReceived
         let rating = null;
         let reviewsCount = 0;
 
