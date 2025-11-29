@@ -1,9 +1,11 @@
-// PROFILE EDIT - CODE � COLLER
+// PROFILE EDIT - CODE À COLLER
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ok } from "assert";
+
+// 🔥 IMPORT MANQUANT — obligatoire !
+import DocUploader from "@/components/DocUploader";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -61,9 +63,7 @@ export default function EditProfilePage() {
 
     const res = await fetch("/api/profile/update", {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
 
@@ -181,12 +181,13 @@ export default function EditProfilePage() {
             onChange={(e) => updateField("description", e.target.value)}
           />
         </div>
-{/* UPLOAD DOCUMENTS */}
-<div className="space-y-4">
-  <DocUploader label="Assurance RC Pro" type="insurance" />
-  <DocUploader label="Certifications / Qualibat" type="certification" />
-  <DocUploader label="Document Administratif" type="document" />
-</div>
+
+        {/* UPLOAD DOCUMENTS */}
+        <div className="space-y-4">
+          <DocUploader label="Assurance RC Pro" type="insurance" />
+          <DocUploader label="Certifications / Qualibat" type="certification" />
+          <DocUploader label="Document Administratif" type="document" />
+        </div>
 
         {/* ERREUR */}
         {error && <p className="text-sm text-red-600">{error}</p>}
