@@ -1,6 +1,6 @@
 // lib/stripe.ts
 
-export const runtime = "nodejs";
+
 
 import Stripe from "stripe";
 

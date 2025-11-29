@@ -1,6 +1,6 @@
 // app/api/marketplace/pay/checkout/route.ts
 
-export const runtime = "nodejs";
+
 
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
