@@ -1,30 +1,34 @@
-// FAVORITES LIST API - A REMPLACER
+// frontend/app/api/favorites/list/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
 export async function GET() {
   try {
-    const supabase = supabaseServer();
+    // ⚠️ IMPORTANT : supabaseServer() → Promise
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user)
+    if (!user) {
       return NextResponse.json(
-        { error: "Non authentifié" },
+        { error: "Non authentifié." },
         { status: 401 }
       );
+    }
 
     const dbUser = await prisma.user.findUnique({
       where: { supabaseId: user.id },
     });
 
-    if (!dbUser)
+    if (!dbUser) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable" },
+        { error: "Utilisateur introuvable." },
         { status: 404 }
       );
+    }
 
     const favorites = await prisma.marketplaceFavorite.findMany({
       where: { userId: dbUser.id },
@@ -41,11 +45,10 @@ export async function GET() {
 
     return NextResponse.json({ favorites });
   } catch (err) {
-    console.error(err);
+    console.error("FAVORITES API ERROR :", err);
     return NextResponse.json(
-      { error: "Erreur serveur" },
+      { error: "Erreur serveur." },
       { status: 500 }
     );
   }
 }
-
