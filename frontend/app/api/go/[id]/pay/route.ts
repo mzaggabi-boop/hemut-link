@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
-import stripe from "@/lib/stripe"; // ✔ FIX
+import stripe from "@/lib/stripe";
 
 export async function POST(
   request: NextRequest,
@@ -20,6 +20,7 @@ export async function POST(
     }
 
     const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -33,10 +34,7 @@ export async function POST(
     });
 
     if (!dbUser) {
-      return NextResponse.json(
-        { error: "Utilisateur introuvable." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
     }
 
     const job = await prisma.goJob.findUnique({
@@ -45,10 +43,7 @@ export async function POST(
     });
 
     if (!job) {
-      return NextResponse.json(
-        { error: "Mission introuvable." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Mission introuvable." }, { status: 404 });
     }
 
     const session = await stripe.checkout.sessions.create({
