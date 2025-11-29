@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
-// Liste des steps VALIDES (basés sur Prisma)
 const VALID_STEPS = [
   "ARTISAN_EN_ROUTE",
   "ARTISAN_ARRIVE",
@@ -19,7 +18,6 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 📌 Récupérer l’ID
     const { id } = await context.params;
     const jobId = Number(id);
 
@@ -30,7 +28,6 @@ export async function POST(
       );
     }
 
-    // 📌 Lire le body
     const { step } = await request.json();
 
     if (!step || typeof step !== "string") {
@@ -40,7 +37,6 @@ export async function POST(
       );
     }
 
-    // 📌 Vérification : l'étape doit être dans la liste
     if (!VALID_STEPS.includes(step as GoJobStep)) {
       return NextResponse.json(
         {
@@ -51,8 +47,8 @@ export async function POST(
       );
     }
 
-    // 👤 Auth Supabase
-    const supabase = supabaseServer();
+    const supabase = await supabaseServer();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -75,7 +71,6 @@ export async function POST(
       );
     }
 
-    // 🔍 Trouver la mission
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
       include: { artisan: true },
@@ -88,7 +83,6 @@ export async function POST(
       );
     }
 
-    // ❗ Vérifier que l’artisan est bien celui assigné
     if (job.artisanId !== dbUser.id) {
       return NextResponse.json(
         { error: "Vous n'êtes pas l'artisan assigné à cette mission." },
@@ -96,7 +90,6 @@ export async function POST(
       );
     }
 
-    // 📝 Ajouter l’historique
     await prisma.goJobProgress.create({
       data: {
         jobId,
@@ -105,7 +98,6 @@ export async function POST(
       },
     });
 
-    // 🔄 Mise à jour de la mission
     await prisma.goJob.update({
       where: { id: jobId },
       data: { currentStep: step as GoJobStep },
