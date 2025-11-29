@@ -11,7 +11,8 @@ import { supabaseServer } from "./supabase-server";
 export type CurrentUser = any;
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const supabase = supabaseServer();
+  // ✅ FIX : ATTENDRE LE CLIENT SUPABASE
+  const supabase = await supabaseServer();
 
   try {
     const { data, error } = await supabase.auth.getUser();
