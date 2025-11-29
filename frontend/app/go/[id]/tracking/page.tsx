@@ -18,17 +18,21 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!id) return;
 
-    getRouteInfo(Number(id))
+    // Comme getRouteInfo demande 2 LatLng on mock une position temporaire
+    // → Ce sera remplacé plus tard par les vraies coordonnées en DB
+    const dummyStart: LatLng = { lat: 48.8566, lng: 2.3522 }; // Paris
+    const dummyEnd: LatLng = { lat: 48.8606, lng: 2.3376 }; // Louvre
+
+    getRouteInfo(dummyStart, dummyEnd)
       .then((result) => {
         if (!result) return;
 
-        // result.start/end sont en LatLng → on convertit
-        const startPoint: LatLng = result.start;
-        const endPoint: LatLng = result.end;
+        const startPoint = dummyStart;
+        const endPoint = dummyEnd;
 
         setStart([startPoint.lng, startPoint.lat]);
         setEnd([endPoint.lng, endPoint.lat]);
-        setRoute(result.route);
+        setRoute(result);
       })
       .catch((err) => console.error("Mapbox error:", err));
   }, [id]);
