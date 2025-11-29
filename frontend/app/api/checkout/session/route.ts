@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { notifyMarketplaceOrderCreated } from "@/lib/notifications";
-import stripe from "@/lib/stripe"; // ✔ FIX Stripe
+import stripe from "@/lib/stripe";
 
 export async function POST(req: Request) {
   try {
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       ],
       metadata: {
         orderId: order.id,
-        buyerId: buyerId,
+        buyerId,
         sellerId: product.sellerId,
       },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/orders/${order.id}?success=1`,
@@ -75,11 +75,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("Erreur création session checkout:", error);
     return NextResponse.json(
       { error: "Erreur interne checkout." },
       { status: 500 }
     );
   }
 }
-
