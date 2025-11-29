@@ -25,8 +25,10 @@ function statusLabel(status: string | null) {
   }
 }
 
-export default async function SellerMarketplaceOrdersPage() {
-  const supabase = supabaseServer();
+export default async function MyMarketplaceOrdersPage() {
+  // ✅ CORRECTION ABSOLUE : ATTENDRE LE SUPABASE SERVER
+  const supabase = await supabaseServer();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -54,36 +56,37 @@ export default async function SellerMarketplaceOrdersPage() {
   }
 
   const orders = await prisma.marketplaceOrder.findMany({
-    where: { sellerId: dbUser.id },
+    where: { buyerId: dbUser.id },
     include: {
       product: true,
-      buyer: true,
+      seller: true,
     },
     orderBy: { createdAt: "desc" },
     take: 100,
   });
 
-  const totalPaid = orders
+  const totalSpent = orders
     .filter((o) => o.status === "paid")
     .reduce((sum, o) => sum + o.total, 0);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-      {/* HEADER */}
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">
-            Commandes marketplace reçues
+            Mes commandes marketplace
           </h1>
           <p className="text-sm text-gray-600">
-            Suivi des ventes réalisées via la marketplace Hemut-link.
+            Historique complet de vos achats.
           </p>
         </div>
 
         <div className="text-right">
-          <p className="text-xs text-gray-500">Total encaissé (commandes payées)</p>
+          <p className="text-xs text-gray-500">
+            Total dépensé (commandes payées)
+          </p>
           <p className="text-lg font-semibold text-gray-900">
-            {totalPaid.toLocaleString("fr-FR", {
+            {totalSpent.toLocaleString("fr-FR", {
               style: "currency",
               currency: "EUR",
             })}
@@ -91,14 +94,16 @@ export default async function SellerMarketplaceOrdersPage() {
         </div>
       </header>
 
-      {/* AUCUNE COMMANDE */}
       {orders.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
-          Vous n&apos;avez pas encore reçu de commande via la marketplace.
+          Vous n’avez encore passé aucune commande sur la marketplace.
           <br />
-          <span className="text-xs text-gray-400">
-            Vos produits apparaîtront ici dès qu&apos;un client passera commande.
-          </span>
+          <Link
+            href="/marketplace"
+            className="mt-2 inline-block text-xs text-blue-600 underline"
+          >
+            Voir les produits disponibles
+          </Link>
         </div>
       ) : (
         <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -114,7 +119,7 @@ export default async function SellerMarketplaceOrdersPage() {
                 <tr>
                   <th className="px-4 py-2 text-left">Date</th>
                   <th className="px-4 py-2 text-left">Produit</th>
-                  <th className="px-4 py-2 text-left">Client</th>
+                  <th className="px-4 py-2 text-left">Vendeur</th>
                   <th className="px-4 py-2 text-right">Montant</th>
                   <th className="px-4 py-2 text-left">Statut</th>
                   <th className="px-4 py-2 text-left">Stripe</th>
@@ -136,23 +141,23 @@ export default async function SellerMarketplaceOrdersPage() {
                           {o.product?.title || "Produit supprimé"}
                         </span>
                         <span className="text-[11px] text-gray-400">
-                          ID commande #{o.id}
+                          Commande #{o.id}
                         </span>
                       </div>
                     </td>
 
                     <td className="px-4 py-2 align-top text-xs text-gray-700">
-                      {o.buyer ? (
+                      {o.seller ? (
                         <>
                           <div className="font-medium">
-                            {o.buyer.firstname} {o.buyer.lastname}
+                            {o.seller.firstname} {o.seller.lastname}
                           </div>
                           <div className="text-[11px] text-gray-500">
-                            {o.buyer.email}
+                            {o.seller.email}
                           </div>
                         </>
                       ) : (
-                        <span className="text-gray-400">Client introuvable</span>
+                        <span className="text-gray-400">Vendeur introuvable</span>
                       )}
                     </td>
 
