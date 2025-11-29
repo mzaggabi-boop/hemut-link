@@ -1,10 +1,11 @@
-// CODE � COLLER
+// app/api/transactions/list/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase-server";
 
 export async function GET() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -25,13 +26,16 @@ export async function GET() {
     where: { receiverId: dbUser.id },
     include: {
       sender: true,
-      order: { include: { items: { include: { product: true } } } },
+      order: {
+        include: {
+          items: { include: { product: true } },
+        },
+      },
       job: true,
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Normalisation pour la page
   const normalized = payments.map((p) => {
     const type = p.order ? "Commande" : p.job ? "Mission Go" : "Autre";
     const label = p.order?.items?.[0]?.product?.title || p.job?.title || "—";
@@ -51,4 +55,3 @@ export async function GET() {
     payments: normalized,
   });
 }
-
