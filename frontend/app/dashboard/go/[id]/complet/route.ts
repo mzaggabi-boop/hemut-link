@@ -8,7 +8,6 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Récupération de l'ID depuis les params
     const { id } = await context.params;
     const jobId = Number(id);
 
@@ -20,8 +19,10 @@ export async function POST(
     }
 
     // Auth
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await supabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json(
@@ -43,7 +44,7 @@ export async function POST(
 
     const artisanId = dbUser.id;
 
-    // Récupération de la mission
+    // Récupération mission
     const job = await prisma.goJob.findUnique({
       where: { id: jobId },
       include: {
@@ -59,7 +60,7 @@ export async function POST(
       );
     }
 
-    // Seul l’artisan assigné peut terminer
+    // Vérification artisan assigné
     if (job.artisanId !== artisanId) {
       return NextResponse.json(
         { error: "Vous ne pouvez pas terminer cette mission." },
@@ -75,13 +76,13 @@ export async function POST(
       );
     }
 
-    // Mise à jour du statut
+    // Marquer terminée
     await prisma.goJob.update({
       where: { id: jobId },
       data: { status: "COMPLETED" },
     });
 
-    // Si paiement associé → valider
+    // Paiements associés → succeeded
     if (job.payments.length > 0) {
       await prisma.payment.updateMany({
         where: { jobId },
@@ -93,7 +94,6 @@ export async function POST(
       { success: true, message: "Mission terminée avec succès !" },
       { status: 200 }
     );
-
   } catch (err) {
     console.error("GO COMPLETE ERROR:", err);
     return NextResponse.json(
