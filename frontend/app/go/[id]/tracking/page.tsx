@@ -28,11 +28,11 @@ export default function TrackingPage() {
       .catch((err) => console.error("Mapbox error:", err));
   }, [id]);
 
-  // ▶️ CONVERSION obligatoire : {lat, lng} → [lng, lat]
+  // Convert {lat, lng} to [lat, lng] tuple (latitude first, longitude second)
   const startArray =
-    start ? ([start.lng, start.lat] as [number, number]) : null;
+    start ? ([start.lat, start.lng] as [number, number]) : null;
   const endArray =
-    end ? ([end.lng, end.lat] as [number, number]) : null;
+    end ? ([end.lat, end.lng] as [number, number]) : null;
 
   return (
     <div className="p-6 space-y-4">
