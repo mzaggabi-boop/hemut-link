@@ -17,8 +17,11 @@ export async function POST(
       );
     }
 
-    const supabase = supabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await supabaseServer();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json(
@@ -49,7 +52,6 @@ export async function POST(
       );
     }
 
-    // ANNULATION (on retire cancelledAt car il n'existe pas)
     await prisma.goJob.update({
       where: { id: jobId },
       data: {
@@ -61,7 +63,6 @@ export async function POST(
       { success: true, message: "Mission annulée." },
       { status: 200 }
     );
-
   } catch (err) {
     console.error("GO CANCEL ERROR:", err);
     return NextResponse.json(
