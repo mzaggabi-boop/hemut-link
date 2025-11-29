@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../../../components/Button";
 
-export default function StripeOnboardCallbackPage() {
+function OnboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get("status") || "unknown";
@@ -50,5 +51,13 @@ export default function StripeOnboardCallbackPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function StripeOnboardCallbackPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Chargement…</div>}>
+      <OnboardContent />
+    </Suspense>
   );
 }
