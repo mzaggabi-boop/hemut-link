@@ -36,9 +36,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     openGraph: {
       title,
       description,
-      type: "product",
+      type: "website", // ✅ FIX - Next.js n'accepte pas "product"
       url,
       images: imageUrl ? [{ url: imageUrl }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: imageUrl ? [imageUrl] : [],
     },
     alternates: { canonical: url },
   };
@@ -72,7 +78,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-8">
-
       {/* JSON-LD SEO */}
       <script
         type="application/ld+json"
@@ -176,4 +181,3 @@ export default async function ProductPage({ params }: { params: { id: string } }
     </main>
   );
 }
-
