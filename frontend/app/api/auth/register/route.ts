@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
@@ -30,21 +31,21 @@ export async function POST(req: Request) {
 
     const token = Buffer.from(JSON.stringify(tokenPayload)).toString("base64");
 
-    const res = NextResponse.json(
-      { user: fakeUser, token },
-      { status: 201 }
-    );
-
-    // Cookie session
-    res.cookies.set("token", token, {
+    // Définition du cookie (méthode App Router)
+    cookies().set({
+      name: "token",
+      value: token,
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    return res;
+    return NextResponse.json(
+      { user: fakeUser, token },
+      { status: 201 }
+    );
   } catch (err: any) {
     console.error("REGISTER ERROR =", err);
     return NextResponse.json(
@@ -53,4 +54,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
