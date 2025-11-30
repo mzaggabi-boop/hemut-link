@@ -9,6 +9,8 @@ function formatCurrency(value: number) {
   });
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function MarketplacePage({
   searchParams,
 }: {
@@ -58,14 +60,13 @@ export default async function MarketplacePage({
    */
   const categories = await prisma.marketplaceProduct.findMany({
     select: { category: true },
-    where: { categoryId: { not: null } }, // <-- FIX DÉFINITIF ✔
+    where: { categoryId: { not: null } },
     distinct: ["categoryId"],
     orderBy: { categoryId: "asc" },
   });
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-      {/* HEADER */}
       <header className="flex flex-col gap-2 border-b border-gray-100 pb-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">
@@ -84,7 +85,6 @@ export default async function MarketplacePage({
         </Link>
       </header>
 
-      {/* RECHERCHE + FILTRES */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
         <form className="flex flex-col gap-3 md:flex-row md:items-center">
           <input
@@ -119,7 +119,6 @@ export default async function MarketplacePage({
         </form>
       </section>
 
-      {/* LISTE */}
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products.length === 0 ? (
           <p className="col-span-full text-xs text-gray-500">
