@@ -2,6 +2,8 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 function formatDate(date: Date) {
   return date.toLocaleString("fr-FR", {
     day: "2-digit",
@@ -13,7 +15,6 @@ function formatDate(date: Date) {
 }
 
 export default async function CalendrierPage() {
-  // Récupération des événements dans Marketplace & GO
   const [orders, goJobs] = await Promise.all([
     prisma.marketplaceOrder.findMany({
       where: { status: { in: ["shipped", "delivered"] } },
@@ -35,7 +36,6 @@ export default async function CalendrierPage() {
     }),
   ]);
 
-  // Transformation en "événements" pour calendrier
   const events = [
     ...orders.map((o) => ({
       type: "ORDER" as const,
@@ -57,12 +57,10 @@ export default async function CalendrierPage() {
     })),
   ];
 
-  // Classement chronologique
   events.sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-      {/* HEADER */}
       <header className="flex flex-col gap-2 border-b border-gray-100 pb-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">
@@ -75,7 +73,6 @@ export default async function CalendrierPage() {
         </div>
       </header>
 
-      {/* LISTE DES ÉVÉNEMENTS */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
         <h2 className="text-sm font-semibold text-gray-900">
           Événements chronologiques
@@ -125,12 +122,10 @@ export default async function CalendrierPage() {
                   </div>
 
                   <div className="flex flex-col items-end gap-1">
-                    {/* BADGE */}
                     <span className="inline-flex rounded-full bg-gray-50 border px-2 py-0.5 text-[11px] font-medium text-gray-700">
                       {event.status}
                     </span>
 
-                    {/* LIENS */}
                     {isOrder ? (
                       <Link
                         href={`/dashboard/orders/${event.id}`}
