@@ -1,33 +1,16 @@
 // app/dashboard/layout.tsx
-"use client";
-
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Bell, Search, ChevronDown } from "lucide-react";
-import { useState } from "react";
 import DashboardSidebar from "./DashboardSidebar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  const getCurrentLabel = () => {
-    if (pathname.startsWith("/dashboard/artisan")) return "Tableau de bord artisan";
-    if (pathname.startsWith("/dashboard/vendor")) return "Tableau de bord vendeur";
-    if (pathname.startsWith("/dashboard/admin")) return "Administration Hemut-link";
-    if (pathname.startsWith("/dashboard/entreprise")) return "Espace entreprise";
-    return "Tableau de bord";
-  };
-
-  const currentLabel = getCurrentLabel();
-
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* TOP BAR */}
       <header className="border-b border-gray-200 bg-white sticky top-0 z-30">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
 
@@ -37,7 +20,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </Link>
             <span className="text-gray-400">/</span>
             <span className="text-sm text-gray-600 truncate max-w-[200px] sm:max-w-none">
-              {currentLabel}
+              Tableau de bord
             </span>
           </div>
 
@@ -73,17 +56,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      {/* ZONE CENTRALE */}
       <main className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex gap-4 items-start">
+
+          {/* SIDEBAR */}
           <DashboardSidebar
             role={"ARTISAN"}
-            pathname={pathname}
-            isCollapsed={isCollapsed}
-            setIsCollapsed={setIsCollapsed}
-            isMobileOpen={isMobileOpen}
-            setIsMobileOpen={setIsMobileOpen}
+            pathname="/dashboard"
+            isCollapsed={false}
+            setIsCollapsed={() => {}}
+            isMobileOpen={false}
+            setIsMobileOpen={() => {}}
           />
 
+          {/* CONTENU */}
           <div className="flex-1">
             {children}
           </div>
