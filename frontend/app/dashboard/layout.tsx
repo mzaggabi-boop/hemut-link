@@ -1,6 +1,8 @@
 // app/dashboard/layout.tsx
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,7 +16,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Petit helper pour afficher un libellé en fonction de l'URL
   const getCurrentLabel = () => {
     if (pathname.startsWith("/dashboard/artisan")) return "Tableau de bord artisan";
     if (pathname.startsWith("/dashboard/vendor")) return "Tableau de bord vendeur";
@@ -27,11 +28,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* TOP BAR */}
       <header className="border-b border-gray-200 bg-white sticky top-0 z-30">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-          
-          {/* Fil d'Ariane */}
+
           <div className="flex items-center gap-2">
             <Link href="/" className="text-sm font-semibold text-gray-900">
               Hemut-link
@@ -42,9 +41,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </span>
           </div>
 
-          {/* Zone droite (search + notif + user menu) */}
           <div className="flex items-center gap-3">
-            {/* Barre de recherche (non connectée pour l’instant) */}
             <div className="relative hidden sm:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
@@ -54,12 +51,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               />
             </div>
 
-            {/* Notifications */}
             <button className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition">
               <Bell className="h-4 w-4 text-gray-600" />
             </button>
 
-            {/* Menu utilisateur (statique pour l’instant) */}
             <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition">
               <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-semibold text-gray-700">
                 HL
@@ -78,12 +73,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {/* ZONE CENTRALE */}
       <main className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex gap-4 items-start">
-          {/* SIDEBAR */}
           <DashboardSidebar
-            role={"ARTISAN"} // pour l’instant on force ARTISAN (démo)
+            role={"ARTISAN"}
             pathname={pathname}
             isCollapsed={isCollapsed}
             setIsCollapsed={setIsCollapsed}
@@ -91,7 +84,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             setIsMobileOpen={setIsMobileOpen}
           />
 
-          {/* CONTENU */}
           <div className="flex-1">
             {children}
           </div>
