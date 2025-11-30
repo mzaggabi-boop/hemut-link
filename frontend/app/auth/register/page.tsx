@@ -1,5 +1,3 @@
-// C:\Projets\Hemut-link\frontend\app\auth\register\page.tsx
-
 "use client";
 
 import { useState } from "react";
@@ -32,14 +30,11 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
       const data = await res.json();
 
@@ -49,7 +44,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Login automatique
       localStorage.setItem("hemut_token", data.token);
 
       router.push("/dashboard");
@@ -72,7 +66,6 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleRegister} className="space-y-5">
-
           <div>
             <label className="block mb-2 text-sm font-medium">Nom</label>
             <Input
@@ -132,7 +125,6 @@ export default function RegisterPage() {
             Se connecter
           </Link>
         </p>
-
       </div>
     </main>
   );
