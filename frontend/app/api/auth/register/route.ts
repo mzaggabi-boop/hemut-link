@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fake user pour test
+    // Fake user test
     const fakeUser = {
       id: Date.now(),
       firstName,
@@ -31,8 +31,9 @@ export async function POST(req: Request) {
 
     const token = Buffer.from(JSON.stringify(tokenPayload)).toString("base64");
 
-    // Cookie Next.js 16 (sans parenthèses)
-    cookies.set({
+    // Next.js 16: cookies() retourne une PROMISE
+    const cookieStore = await cookies();
+    cookieStore.set({
       name: "token",
       value: token,
       httpOnly: true,
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
       { user: fakeUser, token },
       { status: 201 }
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error("REGISTER ERROR =", err);
     return NextResponse.json(
       { error: "Erreur serveur lors de l'inscription." },
