@@ -4,22 +4,31 @@ import { cookies } from "next/headers";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { firstName, lastName, email, password, phone, role } = body;
 
-    if (!firstName || !lastName || !email || !password || !role) {
+    // Le frontend envoie firstname / lastname
+    const {
+      firstname,
+      lastname,
+      email,
+      password,
+      phone = null,
+      role = "USER",   // valeur par défaut
+    } = body;
+
+    if (!firstname || !lastname || !email || !password) {
       return NextResponse.json(
         { error: "Champs manquants." },
         { status: 400 }
       );
     }
 
-    // Fake user test
+    // Fake user
     const fakeUser = {
       id: Date.now(),
-      firstName,
-      lastName,
+      firstName: firstname,
+      lastName: lastname,
       email,
-      phone: phone || null,
+      phone,
       role,
     };
 
@@ -31,7 +40,6 @@ export async function POST(req: Request) {
 
     const token = Buffer.from(JSON.stringify(tokenPayload)).toString("base64");
 
-    // Next.js 16: cookies() retourne une PROMISE
     const cookieStore = await cookies();
     cookieStore.set({
       name: "token",
@@ -55,3 +63,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
