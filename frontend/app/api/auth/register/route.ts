@@ -31,8 +31,8 @@ export async function POST(req: Request) {
 
     const token = Buffer.from(JSON.stringify(tokenPayload)).toString("base64");
 
-    // Définition du cookie (méthode App Router)
-    cookies().set({
+    // Cookie Next.js 16 (sans parenthèses)
+    cookies.set({
       name: "token",
       value: token,
       httpOnly: true,
