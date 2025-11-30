@@ -2,6 +2,8 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 type OrderStatus = string;
 type GoJobStatus = string;
 
@@ -306,3 +308,4 @@ export default async function M10DashboardPage() {
     </main>
   );
 }
+
